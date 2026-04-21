@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "267359360707",
+    "project_id": "inope-store",
+    "storage_bucket": "inope-store.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:267359360707:android:7c9e95cba7a3a93046f476",
+        "android_client_info": {
+          "package_name": "com.example.inope_store"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAeJio09FzPcmWiLwl20C53yC5r_96UcSk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
