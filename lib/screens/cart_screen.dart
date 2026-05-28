@@ -1,116 +1,355 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/cart_controller.dart';
-import '../widgets/cart_item_card.dart';
+import '../models/cart_model.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
+
+  String _fmt(double price) => price.toInt().toString().replaceAllMapped(
+    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+    (m) => '${m[1]}.',
+  );
 
   @override
   Widget build(BuildContext context) {
     final CartController cartController = Get.find();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
-        child: Obx(() {
-          if (cartController.isLoading.value) {
-            return const Center(child: CircularProgressIndicator());
-          }
+        child: Column(
+          children: [
+            // ── App Bar ──────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Row(
+                children: [
+                  const Text(
+                    'Karréta',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  const Spacer(),
+                  Obx(
+                    () => cartController.items.isNotEmpty
+                        ? GestureDetector(
+                            onTap: () {
+                              Get.defaultDialog(
+                                title: 'Hamos Karréta',
+                                middleText:
+                                    'Ita boot hakarak hamos item hotu iha karréta?',
+                                textConfirm: 'Hamos',
+                                textCancel: 'Lae',
+                                confirmTextColor: Colors.white,
+                                buttonColor: const Color(0xFFE53935),
+                                onConfirm: () {
+                                  cartController.clearCart();
+                                  Get.back();
+                                },
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.05),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                              child: const Text(
+                                'Hamos',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFFE53935),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
+            ),
 
-          if (cartController.cartItems.isEmpty) {
-            return const Center(child: Text('Karréta seidauk iha'));
-          }
+            const SizedBox(height: 12),
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Karréta Hau',
-                        style: TextStyle(
+            // ── Cart Items ───────────────────────────────────
+            Expanded(
+              child: Obx(() {
+                if (cartController.isLoading.value) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF1A1A1A)),
+                  );
+                }
+                if (cartController.items.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.shopping_bag_outlined,
+                          size: 80,
+                          color: Colors.grey.shade300,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Karréta mamuk',
+                          style: TextStyle(
                             fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF2D2D2D))),
-                    const SizedBox(height: 4),
-                    Text('${cartController.itemCount} itens',
-                        style: const TextStyle(
-                            fontSize: 10, color: Color(0xFF888888))),
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1A1A1A),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Hatama produtu ba karréta ita boot',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF888888),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        GestureDetector(
+                          onTap: () => Get.toNamed('/shop'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 28,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1A1A1A),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Text(
+                              'Buka Shop',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: cartController.items.length,
+                  itemBuilder: (_, i) => _CartItemCard(
+                    item: cartController.items[i],
+                    onIncrease: () => cartController.updateQuantity(
+                      cartController.items[i].id,
+                      cartController.items[i].quantity + 1,
+                    ),
+                    onDecrease: () => cartController.updateQuantity(
+                      cartController.items[i].id,
+                      cartController.items[i].quantity - 1,
+                    ),
+                    onRemove: () =>
+                        cartController.removeItem(cartController.items[i].id),
+                  ),
+                );
+              }),
+            ),
+
+            // ── Summary + Checkout ───────────────────────────
+            Obx(() {
+              if (cartController.items.isEmpty) return const SizedBox.shrink();
+              return Container(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 16,
+                      offset: const Offset(0, -4),
+                    ),
                   ],
                 ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: cartController.cartItems.length,
-                  itemBuilder: (context, index) =>
-                      CartItemCard(item: cartController.cartItems[index]),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${cartController.itemCount} item',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF888888),
+                          ),
+                        ),
+                        Text(
+                          'Rp ${_fmt(cartController.totalPrice)}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1A1A1A),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: GestureDetector(
+                        onTap: () => Get.toNamed('/checkout'),
+                        child: Container(
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A1A1A),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'Checkout →',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              _CartTotal(),
-              _CheckoutButton(),
-              const SizedBox(height: 12),
-            ],
-          );
-        }),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _CartTotal extends StatelessWidget {
+class _CartItemCard extends StatelessWidget {
+  final CartItemModel item;
+  final VoidCallback onIncrease;
+  final VoidCallback onDecrease;
+  final VoidCallback onRemove;
+
+  const _CartItemCard({
+    required this.item,
+    required this.onIncrease,
+    required this.onDecrease,
+    required this.onRemove,
+  });
+
+  String _fmt(double price) => price.toInt().toString().replaceAllMapped(
+    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+    (m) => '${m[1]}.',
+  );
+
   @override
   Widget build(BuildContext context) {
-    final CartController cartController = Get.find();
-
     return Container(
-      margin: const EdgeInsets.all(12),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5)),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Subtotal',
-                  style: TextStyle(fontSize: 11, color: Color(0xFF888888))),
-              Obx(() => Text(
-                  '\$${cartController.totalPrice.value.toStringAsFixed(2)}',
-                  style:
-                      const TextStyle(fontSize: 11, color: Color(0xFF888888)))),
-            ],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          const SizedBox(height: 8),
-          const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        ],
+      ),
+      child: Row(
+        children: [
+          // Gambar produk
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: 72,
+              height: 72,
+              color: const Color(0xFFF0F0F0),
+              child: item.productImage.isNotEmpty
+                  ? Image.network(
+                      item.productImage,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.shopping_bag,
+                        color: Color(0xFFCCCCCC),
+                      ),
+                    )
+                  : const Icon(Icons.shopping_bag, color: Color(0xFFCCCCCC)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Info produk
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Ombak',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF888888))),
-                Text('Gratis',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF888888)))
-              ]),
-          const Divider(height: 20, thickness: 0.5, color: Color(0xFFEEEEEE)),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Totál',
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF2D2D2D))),
-              Obx(() => Text(
-                  '\$${cartController.totalPrice.value.toStringAsFixed(2)}',
+                Text(
+                  item.productName,
                   style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF2D2D2D)))),
-            ],
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Rp ${_fmt(item.price)}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    // Tombol quantity
+                    _QtyButton(icon: Icons.remove, onTap: onDecrease),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Text(
+                        '${item.quantity}',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    _QtyButton(icon: Icons.add, onTap: onIncrease),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: onRemove,
+                      child: const Icon(
+                        Icons.delete_outline,
+                        color: Color(0xFFE53935),
+                        size: 20,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -118,26 +357,24 @@ class _CartTotal extends StatelessWidget {
   }
 }
 
-class _CheckoutButton extends StatelessWidget {
+class _QtyButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _QtyButton({required this.icon, required this.onTap});
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: GestureDetector(
-        onTap: () => Get.toNamed('/checkout'),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-              color: const Color(0xFF2D2D2D),
-              borderRadius: BorderRadius.circular(10)),
-          child: const Center(
-              child: Text('Checkout →',
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white))),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F0F0),
+          borderRadius: BorderRadius.circular(8),
         ),
+        child: Icon(icon, size: 16, color: const Color(0xFF1A1A1A)),
       ),
     );
   }
