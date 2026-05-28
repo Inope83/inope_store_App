@@ -13,12 +13,14 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 2), () {
-      if (Get.find<AuthController>().isLoggedIn) {
-        Get.offAllNamed('/home');
-      } else {
+    Future.delayed(const Duration(seconds: 2), () async {
+      final auth = Get.find<AuthController>();
+      if (!auth.isLoggedIn) {
         Get.offAllNamed('/login');
+        return;
       }
+      await auth.ensureUserLoaded();
+      Get.offAllNamed(auth.isAdmin ? '/admin' : '/home');
     });
   }
 

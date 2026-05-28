@@ -89,13 +89,11 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 24),
               Obx(() => CustomButton(
                     onPressed: () async {
-                      bool success = await _authController.signIn(
+                      final success = await _authController.signIn(
                         email: emailController.text.trim(),
                         password: passwordController.text,
                       );
-                      if (success) {
-                        Get.offAllNamed('/home');
-                      } else {
+                      if (!success) {
                         Get.snackbar('Sala', _authController.errorMessage.value,
                             snackPosition: SnackPosition.BOTTOM,
                             backgroundColor: Colors.red,

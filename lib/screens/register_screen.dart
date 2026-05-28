@@ -8,10 +8,13 @@ class RegisterScreen extends StatelessWidget {
 
   final AuthController _authController = Get.find();
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
   final RxBool isPasswordVisible = false.obs;
+  final RxBool isConfirmPasswordVisible = false.obs;
 
   @override
   Widget build(BuildContext context) {
@@ -23,122 +26,246 @@ class RegisterScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ── Back button ───────────────────────────────
               IconButton(
-                  onPressed: () => Get.back(),
-                  icon: const Icon(Icons.arrow_back)),
-              const SizedBox(height: 20),
-              const Text('Kria Konta',
-                  style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2D2D2D))),
-              const SizedBox(height: 8),
-              const Text('Regista atu kontinua ba Store',
-                  style: TextStyle(fontSize: 14, color: Color(0xFF888888))),
-              const SizedBox(height: 32),
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: 'Naran Kompletu',
-                  hintText: 'Hatama ita naran kompletu',
-                  prefixIcon: const Icon(Icons.person_outline),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFE0E0E0))),
-                  focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: Color(0xFF2D2D2D), width: 2)),
-                ),
+                onPressed: () => Get.back(),
+                icon: const Icon(Icons.arrow_back_ios),
+                padding: EdgeInsets.zero,
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  hintText: 'Hatama ita email',
-                  prefixIcon: const Icon(Icons.email_outlined),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFE0E0E0))),
-                  focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: Color(0xFF2D2D2D), width: 2)),
+
+              // ── Header ────────────────────────────────────
+              Center(
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2D2D2D),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Icon(
+                    Icons.shopping_bag,
+                    size: 40,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: 'Numeru Telefone',
-                  hintText: 'Hatama ita numeru telefone',
-                  prefixIcon: const Icon(Icons.phone_outlined),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFE0E0E0))),
-                  focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: Color(0xFF2D2D2D), width: 2)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Obx(() => TextField(
-                    controller: passwordController,
-                    obscureText: !isPasswordVisible.value,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      hintText: 'Kria Password',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                          icon: Icon(isPasswordVisible.value
-                              ? Icons.visibility_off
-                              : Icons.visibility),
-                          onPressed: () => isPasswordVisible.toggle()),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: Color(0xFFE0E0E0))),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                              color: Color(0xFF2D2D2D), width: 2)),
-                    ),
-                  )),
               const SizedBox(height: 24),
-              Obx(() => CustomButton(
-                    onPressed: () async {
-                      bool success = await _authController.signUp(
-                        email: emailController.text.trim(),
-                        password: passwordController.text,
-                        name: nameController.text.trim(),
-                        phone: phoneController.text.trim(),
-                      );
-                      if (success) {
-                        Get.offAllNamed('/home');
-                      } else {
-                        Get.snackbar('Sala', _authController.errorMessage.value,
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor: Colors.red,
-                            colorText: Colors.white);
-                      }
-                    },
-                    text: 'Regista',
-                    isLoading: _authController.isLoading.value,
-                  )),
+              const Text(
+                'Kria Konta Foun',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2D2D2D),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Rejista atu hahú kompra',
+                style: TextStyle(fontSize: 14, color: Color(0xFF888888)),
+              ),
+              const SizedBox(height: 32),
+
+              // ── Name ──────────────────────────────────────
+              _buildTextField(
+                controller: nameController,
+                label: 'Naran',
+                hint: 'Hatama naran kompletu',
+                icon: Icons.person_outline,
+              ),
+              const SizedBox(height: 16),
+
+              // ── Phone ─────────────────────────────────────
+              _buildTextField(
+                controller: phoneController,
+                label: 'Telemóvel',
+                hint: 'Hatama númeru telemóvel',
+                icon: Icons.phone_outlined,
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 16),
+
+              // ── Email ─────────────────────────────────────
+              _buildTextField(
+                controller: emailController,
+                label: 'Email',
+                hint: 'Hatama email',
+                icon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 16),
+
+              // ── Password ──────────────────────────────────
+              Obx(
+                () => _buildPasswordField(
+                  controller: passwordController,
+                  label: 'Password',
+                  hint: 'Mínimo 6 karakter',
+                  isVisible: isPasswordVisible,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // ── Confirm Password ──────────────────────────
+              Obx(
+                () => _buildPasswordField(
+                  controller: confirmPasswordController,
+                  label: 'Konfirma Password',
+                  hint: 'Repete password',
+                  isVisible: isConfirmPasswordVisible,
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              // ── Submit button ─────────────────────────────
+              Obx(
+                () => CustomButton(
+                  onPressed: () => _handleRegister(),
+                  text: 'Rejista',
+                  isLoading: _authController.isLoading.value,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // ── Login link ────────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Iha ona konta? "),
+                  TextButton(
+                    onPressed: () => Get.offNamed('/login'),
+                    child: const Text(
+                      'Log In',
+                      style: TextStyle(
+                        color: Color(0xFF2D2D2D),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // ── Validasi & Register ───────────────────────────────────
+  Future<void> _handleRegister() async {
+    final name = nameController.text.trim();
+    final phone = phoneController.text.trim();
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+    final confirmPassword = confirmPasswordController.text;
+
+    // Validasi lokal
+    if (name.isEmpty || phone.isEmpty || email.isEmpty || password.isEmpty) {
+      Get.snackbar(
+        'Sala',
+        'Por favor prenxe kampu hotu',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      Get.snackbar(
+        'Sala',
+        'Password no konfirmasaun la koresponde',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (password.length < 6) {
+      Get.snackbar(
+        'Sala',
+        'Password mínimo 6 karakter',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final success = await _authController.signUp(
+      name: name,
+      phone: phone,
+      email: email,
+      password: password,
+    );
+
+    if (success) {
+      Get.offAllNamed('/home');
+    } else {
+      Get.snackbar(
+        'Sala',
+        _authController.errorMessage.value,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  // ── Widget helpers ────────────────────────────────────────
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(icon),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF2D2D2D), width: 2),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required RxBool isVisible,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: !isVisible.value,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: const Icon(Icons.lock_outline),
+        suffixIcon: IconButton(
+          icon: Icon(isVisible.value ? Icons.visibility_off : Icons.visibility),
+          onPressed: () => isVisible.toggle(),
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF2D2D2D), width: 2),
         ),
       ),
     );
