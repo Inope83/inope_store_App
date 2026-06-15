@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../models/order.dart';
 import '../services/api_service.dart';
@@ -30,7 +31,7 @@ class OrderController extends GetxController {
         orders.value = data.map((e) => OrderModel.fromJson(e)).toList();
       }
     } catch (e) {
-      print('Error fetching orders: $e');
+      debugPrint('Error fetching orders: $e');
     } finally {
       isLoading.value = false;
     }

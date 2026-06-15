@@ -1,4 +1,6 @@
 class FormatUtils {
+  static const String currencySymbol = r'$';
+
   static double parseDouble(dynamic value) {
     if (value == null) return 0.0;
     if (value is num) return value.toDouble();
@@ -9,9 +11,9 @@ class FormatUtils {
   }
 
   static String formatPrice(double price) {
-    return price.toInt().toString().replaceAllMapped(
+    return '$currencySymbol${price.toInt().toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (m) => '${m[1]}.',
-    );
+    )}';
   }
 }

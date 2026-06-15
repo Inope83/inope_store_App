@@ -111,16 +111,16 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Obx(
-            () => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Ola 👋',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF888888)),
-                ),
-                const SizedBox(height: 2),
-                Text(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Ola 👋',
+                style: TextStyle(fontSize: 12, color: Color(0xFF888888)),
+              ),
+              const SizedBox(height: 2),
+              Obx(
+                () => Text(
                   _authController.currentUser.value?.name ?? 'Visitante',
                   style: const TextStyle(
                     fontSize: 20,
@@ -128,8 +128,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Color(0xFF1A1A1A),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           Row(
             children: [
@@ -139,13 +139,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {},
               ),
               const SizedBox(width: 10),
-              Obx(
-                () => _AppBarButton(
-                  icon: Icons.shopping_bag_outlined,
-                  dark: true,
-                  badge: _cartController.itemCount,
-                  onTap: () => Get.toNamed('/cart'),
-                ),
+              _AppBarButton(
+                icon: Icons.shopping_bag_outlined,
+                dark: true,
+                badgeWidget: _CartBadge(controller: _cartController),
+                onTap: () => Get.toNamed('/cart'),
               ),
             ],
           ),
@@ -288,41 +286,13 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           children: _productController.categories.map((cat) {
-            final isActive = _productController.selectedCategory.value == cat;
-            return GestureDetector(
-              onTap: () => _productController.selectedCategory.value = cat,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.only(right: 10),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: isActive ? const Color(0xFF1A1A1A) : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  cat,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: isActive ? Colors.white : const Color(0xFF555555),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
+          return _CategoryChip(
+            label: cat,
+            controller: _productController,
+          );
+        }).toList(),
       ),
-    );
+    ));
   }
 }
 
@@ -426,18 +396,90 @@ class _BannerCard extends StatelessWidget {
   }
 }
 
+// ── Category Chip ─────────────────────────────────────────────────
+class _CategoryChip extends StatelessWidget {
+  final String label;
+  final ProductController controller;
+  const _CategoryChip({required this.label, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final isActive = controller.selectedCategory.value == label;
+      return GestureDetector(
+        onTap: () => controller.selectedCategory.value = label,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.only(right: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFF1A1A1A) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: isActive ? Colors.white : const Color(0xFF555555),
+            ),
+          ),
+        ),
+      );
+    });
+  }
+}
+
+// ── Cart Badge ───────────────────────────────────────────────────
+class _CartBadge extends StatelessWidget {
+  final CartController controller;
+  const _CartBadge({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (controller.itemCount <= 0) return const SizedBox.shrink();
+      return Container(
+        width: 15,
+        height: 15,
+        decoration: const BoxDecoration(
+          color: Color(0xFFE53935),
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: Text(
+            '${controller.itemCount}',
+            style: const TextStyle(
+              fontSize: 8,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    });
+  }
+}
+
 // ── App bar button ───────────────────────────────────────────────
 class _AppBarButton extends StatelessWidget {
   final IconData icon;
   final bool dark;
-  final int badge;
   final VoidCallback onTap;
+  final Widget? badgeWidget;
 
   const _AppBarButton({
     required this.icon,
     required this.dark,
     required this.onTap,
-    this.badge = 0,
+    this.badgeWidget,
   });
 
   @override
@@ -466,29 +508,8 @@ class _AppBarButton extends StatelessWidget {
               color: dark ? Colors.white : const Color(0xFF1A1A1A),
             ),
           ),
-          if (badge > 0)
-            Positioned(
-              top: 5,
-              right: 5,
-              child: Container(
-                width: 15,
-                height: 15,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFE53935),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    '$badge',
-                    style: const TextStyle(
-                      fontSize: 8,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          if (badgeWidget != null)
+            Positioned(top: 5, right: 5, child: badgeWidget!),
         ],
       ),
     );
@@ -611,7 +632,7 @@ class _ProductCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Rp ${_fmt(product.price)}',
+                          '\$ ${_fmt(product.price)}',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -620,7 +641,7 @@ class _ProductCard extends StatelessWidget {
                         ),
                         if (product.hasDiscount)
                           Text(
-                            'Rp ${_fmt(product.originalPrice!)}',
+                            '\$ ${_fmt(product.originalPrice!)}',
                             style: const TextStyle(
                               fontSize: 10,
                               color: Color(0xFFAAAAAA),

@@ -312,7 +312,7 @@ class ProfileScreen extends StatelessWidget {
                                       fontSize: 13,
                                       color: Color(0xFF888888))),
                               Text(
-                                'Rp ${_fmt(total)}',
+                                '\$ ${_fmt(total)}',
                                 style: const TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.bold,

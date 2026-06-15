@@ -267,7 +267,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${item.quantity} x Rp ${_fmt(item.price)}',
+                                '${item.quantity} x \$ ${_fmt(item.price)}',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Color(0xFF888888),
@@ -278,7 +278,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Rp ${_fmt(item.subtotal)}',
+                          '\$ ${_fmt(item.subtotal)}',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -311,9 +311,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 child: Column(
                   children: [
                     _buildPriceRow(
-                        'Subtotal', 'Rp ${_fmt(cartController.totalPrice.value)}'),
+                        'Subtotal', '\$ ${_fmt(cartController.totalPrice.value)}'),
                     const SizedBox(height: 10),
-                    _buildPriceRow('Porte (Frete)', 'Rp ${_fmt(shippingFee)}'),
+                    _buildPriceRow('Porte (Frete)', '\$ ${_fmt(shippingFee)}'),
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 12),
                       child: Divider(height: 1),
@@ -330,7 +330,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         ),
                         Text(
-                          'Rp ${_fmt(totalPayable)}',
+                          '\$ ${_fmt(totalPayable)}',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

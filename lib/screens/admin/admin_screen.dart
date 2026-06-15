@@ -225,7 +225,7 @@ class _DashboardTab extends StatelessWidget {
                 children: [
                   const Text('Total Receita (Orden Kompleta)', style: TextStyle(fontSize: 13, color: Color(0xFF888888))),
                   const SizedBox(height: 4),
-                  Text('Rp ${_fmt(admin.totalRevenue.value)}',
+                  Text('\$ ${_fmt(admin.totalRevenue.value)}',
                       style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
                 ],
               ),
@@ -482,7 +482,7 @@ class _OrderCard extends StatelessWidget {
           const Divider(height: 20),
           Row(
             children: [
-              Text('Rp ${FormatUtils.formatPrice(total)}',
+              Text('\$ ${FormatUtils.formatPrice(total)}',
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
               const Spacer(),
               if (isPending) ...[
@@ -729,7 +729,7 @@ class _ProductAdminCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Text('Rp ${_fmt(product.price)}',
+                    Text('\$ ${_fmt(product.price)}',
                         style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
                     const SizedBox(width: 8),
                     Container(

@@ -194,7 +194,7 @@ class CartScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Rp ${_fmt(cartController.totalPrice.value)}',
+                          '\$ ${_fmt(cartController.totalPrice.value)}',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -309,7 +309,7 @@ class _CartItemCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Rp ${_fmt(item.price)}',
+                  '\$ ${_fmt(item.price)}',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,

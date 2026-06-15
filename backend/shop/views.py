@@ -190,6 +190,20 @@ def order_create(request):
 
     items_data = []
     for item in cart_items:
+        try:
+            product = Product.objects.get(id=int(item.product_id))
+        except (Product.DoesNotExist, ValueError):
+            return Response(
+                {'error': f"Produtu '{item.product_name}' la iha"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if product.stock < item.quantity:
+            return Response(
+                {'error': f"Stock '{item.product_name}' la to'o. Stock disponivel: {product.stock}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         data = CartItemSerializer(item).data
         # Convert Decimal values to floats for JSONField compatibility
         data['price'] = float(data['price'])
@@ -207,6 +221,10 @@ def order_create(request):
             payment_method=serializer.validated_data.get('payment_method', 'Cash on Delivery'),
             payment_proof=request.FILES.get('payment_proof'),
         )
+        for item in cart_items:
+            product = Product.objects.get(id=int(item.product_id))
+            product.stock -= item.quantity
+            product.save()
         cart_items.delete()
 
     return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../models/product_model.dart';
 import '../services/api_service.dart';
@@ -12,20 +13,27 @@ class ProductController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString selectedCategory = 'Hotu'.obs;
   final RxString searchQuery = ''.obs;
-
-  final List<String> categories = [
-    'Hotu',
-    'Sapatu',
-    'Topu',
-    'Kalsa',
-    'Vestidu',
-    'Bolsa',
-  ];
+  final RxList<String> categories = <String>['Hotu'].obs;
 
   @override
   void onInit() {
     super.onInit();
     fetchProducts();
+    fetchCategories();
+  }
+
+  Future<void> fetchCategories() async {
+    try {
+      final res = await _api.get('/categories/');
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final List<dynamic> results = data is Map ? (data['results'] ?? []) : data;
+        final names = results.map((c) => c['name'] as String).toList();
+        categories.value = ['Hotu', ...names];
+      }
+    } catch (e) {
+      debugPrint('Error fetching categories: $e');
+    }
   }
 
   Future<void> fetchProducts() async {
@@ -39,7 +47,7 @@ class ProductController extends GetxController {
         _refreshDerivedLists();
       }
     } catch (e) {
-      print('Error fetching products: $e');
+      debugPrint('Error fetching products: $e');
     } finally {
       isLoading.value = false;
     }
@@ -54,13 +62,15 @@ class ProductController extends GetxController {
         adminProducts.value = results.map((e) => ProductModel.fromJson(e)).toList();
       }
     } catch (e) {
-      print('Error fetching products for admin: $e');
+      debugPrint('Error fetching products for admin: $e');
     }
   }
 
   void _refreshDerivedLists() {
     featuredProducts.value = allProducts.where((p) => p.hasDiscount).toList();
-    newProducts.value = allProducts;
+    final sorted = List<ProductModel>.from(allProducts)
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    newProducts.value = sorted;
   }
 
   List<ProductModel> get filteredProducts {
