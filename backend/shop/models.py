@@ -24,6 +24,9 @@ class Product(models.Model):
     description = models.TextField(blank=True, default='')
     stock = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    rating = models.FloatField(default=0.0)
+    sizes = models.TextField(default='S,M,L,XL')
+    colors = models.TextField(default='Black,White,Blue')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

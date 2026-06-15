@@ -1,12 +1,14 @@
+import 'dart:convert';
 import 'package:get/get.dart';
-import 'package:sqflite/sqflite.dart';
-import '../database/database_helper.dart';
-import '../models/product.dart';
+import '../models/product_model.dart';
+import '../services/api_service.dart';
 
 class ProductController extends GetxController {
-  final RxList<Product> allProducts = <Product>[].obs;
-  final RxList<Product> featuredProducts = <Product>[].obs;
-  final RxList<Product> newProducts = <Product>[].obs;
+  final ApiService _api = ApiService();
+  final RxList<ProductModel> allProducts = <ProductModel>[].obs;
+  final RxList<ProductModel> featuredProducts = <ProductModel>[].obs;
+  final RxList<ProductModel> newProducts = <ProductModel>[].obs;
+  final RxList<ProductModel> adminProducts = <ProductModel>[].obs;
   final RxBool isLoading = false.obs;
   final RxString selectedCategory = 'Hotu'.obs;
   final RxString searchQuery = ''.obs;
@@ -17,7 +19,7 @@ class ProductController extends GetxController {
     'Topu',
     'Kalsa',
     'Vestidu',
-    'Bolsa'
+    'Bolsa',
   ];
 
   @override
@@ -29,12 +31,13 @@ class ProductController extends GetxController {
   Future<void> fetchProducts() async {
     isLoading.value = true;
     try {
-      Database db = await DatabaseHelper().database;
-      List<Map<String, dynamic>> result = await db.query('products');
-
-      allProducts.value = result.map((e) => Product.fromJson(e)).toList();
-      featuredProducts.value = allProducts.where((p) => p.isFeatured).toList();
-      newProducts.value = allProducts.where((p) => p.isNew).toList();
+      final res = await _api.get('/products/');
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final List<dynamic> results = data is Map ? (data['results'] ?? []) : data;
+        allProducts.value = results.map((e) => ProductModel.fromJson(e)).toList();
+        _refreshDerivedLists();
+      }
     } catch (e) {
       print('Error fetching products: $e');
     } finally {
@@ -42,11 +45,28 @@ class ProductController extends GetxController {
     }
   }
 
-  List<Product> get filteredProducts {
-    List<Product> products = allProducts;
+  Future<void> fetchProductsForAdmin() async {
+    try {
+      final res = await _api.get('/products/?admin=true');
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final List<dynamic> results = data is Map ? (data['results'] ?? []) : data;
+        adminProducts.value = results.map((e) => ProductModel.fromJson(e)).toList();
+      }
+    } catch (e) {
+      print('Error fetching products for admin: $e');
+    }
+  }
+
+  void _refreshDerivedLists() {
+    featuredProducts.value = allProducts.where((p) => p.hasDiscount).toList();
+    newProducts.value = allProducts;
+  }
+
+  List<ProductModel> get filteredProducts {
+    List<ProductModel> products = allProducts;
     if (selectedCategory.value != 'Hotu') {
-      products =
-          products.where((p) => p.category == selectedCategory.value).toList();
+      products = products.where((p) => p.category == selectedCategory.value).toList();
     }
     if (searchQuery.value.isNotEmpty) {
       products = products

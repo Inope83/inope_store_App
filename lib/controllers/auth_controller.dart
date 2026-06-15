@@ -1,16 +1,30 @@
+import 'dart:convert';
 import 'package:get/get.dart';
-import 'package:sqflite/sqflite.dart';
-import '../database/database_helper.dart';
 import '../models/user_model.dart';
+import '../services/api_service.dart';
 
 class AuthController extends GetxController {
+  final ApiService _api = ApiService();
   final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
 
   Future<AuthController> init() async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await _api.init();
+    if (_api.accessToken != null) {
+      await _loadProfile();
+    }
     return this;
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final res = await _api.get('/auth/profile/');
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        currentUser.value = UserModel.fromJson(data);
+      }
+    } catch (_) {}
   }
 
   Future<bool> signUp({
@@ -22,26 +36,19 @@ class AuthController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      Database db = await DatabaseHelper().database;
-
-      List<Map<String, dynamic>> existing =
-          await db.query('users', where: 'email = ?', whereArgs: [email]);
-      if (existing.isNotEmpty) {
-        errorMessage.value = 'Email ona rejisu';
+      final result = await _api.register({
+        'email': email.trim(),
+        'password': password,
+        'name': name,
+        'phone': phone,
+      });
+      if (result.containsKey('error')) {
+        errorMessage.value = result['error'].toString();
         return false;
       }
-
-      String id = DateTime.now().millisecondsSinceEpoch.toString();
-      UserModel newUser = UserModel(
-        id: id,
-        email: email.trim(),
-        name: name,
-        phone: phone,
-        createdAt: DateTime.now(),
-      );
-
-      await db.insert('users', newUser.toJson());
-      currentUser.value = newUser;
+      if (result['user'] != null) {
+        currentUser.value = UserModel.fromJson(result['user']);
+      }
       return true;
     } catch (e) {
       errorMessage.value = e.toString();
@@ -58,17 +65,15 @@ class AuthController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      Database db = await DatabaseHelper().database;
-      List<Map<String, dynamic>> result = await db
-          .query('users', where: 'email = ?', whereArgs: [email.trim()]);
-
-      if (result.isNotEmpty) {
-        currentUser.value = UserModel.fromJson(result.first);
-        return true;
-      } else {
-        errorMessage.value = 'Uzuáriu la hetan';
+      final result = await _api.login(email.trim(), password);
+      if (result.containsKey('error')) {
+        errorMessage.value = result['error'].toString();
         return false;
       }
+      if (result['user'] != null) {
+        currentUser.value = UserModel.fromJson(result['user']);
+      }
+      return true;
     } catch (e) {
       errorMessage.value = e.toString();
       return false;
@@ -78,9 +83,17 @@ class AuthController extends GetxController {
   }
 
   Future<void> signOut() async {
+    await _api.clearTokens();
     currentUser.value = null;
   }
 
-  bool get isLoggedIn => currentUser.value != null;
-  String get userId => currentUser.value?.id ?? '';
+  Future<void> ensureUserLoaded() async {
+    if (_api.accessToken != null && currentUser.value == null) {
+      await _loadProfile();
+    }
+  }
+
+  bool get isLoggedIn => _api.accessToken != null;
+  bool get isAdmin => currentUser.value?.isAdmin ?? false;
+  int get userId => currentUser.value?.id ?? 0;
 }

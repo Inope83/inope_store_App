@@ -12,6 +12,7 @@ import 'screens/shop_screen.dart';
 import 'screens/cart_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/checkout_screen.dart';
+import 'screens/admin/admin_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +44,7 @@ class InopeStore extends StatelessWidget {
         GetPage(name: '/register', page: () => RegisterScreen()),
         GetPage(name: '/home', page: () => const MainNavigationScreen()),
         GetPage(name: '/checkout', page: () => CheckoutScreen()),
+        GetPage(name: '/admin', page: () => const AdminScreen()),
       ],
       debugShowCheckedModeBanner: false,
     );

@@ -20,7 +20,6 @@ class CartScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // ── App Bar ──────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Row(
@@ -85,7 +84,6 @@ class CartScreen extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // ── Cart Items ───────────────────────────────────
             Expanded(
               child: Obx(() {
                 if (cartController.isLoading.value) {
@@ -152,21 +150,20 @@ class CartScreen extends StatelessWidget {
                   itemBuilder: (_, i) => _CartItemCard(
                     item: cartController.items[i],
                     onIncrease: () => cartController.updateQuantity(
-                      cartController.items[i].id,
+                      cartController.items[i].id.toString(),
                       cartController.items[i].quantity + 1,
                     ),
                     onDecrease: () => cartController.updateQuantity(
-                      cartController.items[i].id,
+                      cartController.items[i].id.toString(),
                       cartController.items[i].quantity - 1,
                     ),
                     onRemove: () =>
-                        cartController.removeItem(cartController.items[i].id),
+                        cartController.removeFromCart(cartController.items[i].id.toString()),
                   ),
                 );
               }),
             ),
 
-            // ── Summary + Checkout ───────────────────────────
             Obx(() {
               if (cartController.items.isEmpty) return const SizedBox.shrink();
               return Container(
@@ -197,7 +194,7 @@ class CartScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Rp ${_fmt(cartController.totalPrice)}',
+                          'Rp ${_fmt(cartController.totalPrice.value)}',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -277,7 +274,6 @@ class _CartItemCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Gambar produk
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Container(
@@ -297,7 +293,6 @@ class _CartItemCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // Info produk
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,7 +319,6 @@ class _CartItemCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    // Tombol quantity
                     _QtyButton(icon: Icons.remove, onTap: onDecrease),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 14),

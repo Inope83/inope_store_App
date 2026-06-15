@@ -1,10 +1,11 @@
+import 'dart:convert';
 import 'package:get/get.dart';
-import 'package:sqflite/sqflite.dart';
-import '../database/database_helper.dart';
-import '../models/cart_item.dart';
+import '../models/cart_model.dart';
+import '../services/api_service.dart';
 import 'auth_controller.dart';
 
 class CartController extends GetxController {
+  final ApiService _api = ApiService();
   final AuthController _authController = Get.find();
   final RxList<CartItemModel> cartItems = <CartItemModel>[].obs;
   final RxBool isLoading = false.obs;
@@ -18,16 +19,19 @@ class CartController extends GetxController {
     });
   }
 
+  List<CartItemModel> get items => cartItems;
+
   Future<void> fetchCart() async {
-    if (_authController.userId.isEmpty) return;
+    if (!_authController.isLoggedIn) return;
 
     isLoading.value = true;
     try {
-      Database db = await DatabaseHelper().database;
-      List<Map<String, dynamic>> result = await db.query('cart',
-          where: 'user_id = ?', whereArgs: [_authController.userId]);
-      cartItems.value = result.map((e) => CartItemModel.fromJson(e)).toList();
-      _calculateTotal();
+      final res = await _api.get('/cart/');
+      if (res.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(res.body);
+        cartItems.value = data.map((e) => CartItemModel.fromJson(e)).toList();
+        _calculateTotal();
+      }
     } catch (e) {
       print('Error fetching cart: $e');
     } finally {
@@ -39,37 +43,29 @@ class CartController extends GetxController {
     required String productId,
     required String name,
     required double price,
-    required String size,
-    required String color,
+    String size = '',
+    String color = '',
     required String imageUrl,
     int quantity = 1,
   }) async {
-    if (_authController.userId.isEmpty) {
+    if (!_authController.isLoggedIn) {
       Get.toNamed('/login');
       return;
     }
 
     isLoading.value = true;
     try {
-      Database db = await DatabaseHelper().database;
-      String id = DateTime.now().millisecondsSinceEpoch.toString();
-
-      CartItemModel newItem = CartItemModel(
-        id: id,
-        productId: productId,
-        userId: _authController.userId,
-        name: name,
-        price: price,
-        quantity: quantity,
-        size: size,
-        color: color,
-        imageUrl: imageUrl,
-      );
-
-      await db.insert('cart', newItem.toJson());
-      await fetchCart();
-      Get.snackbar('Suksesu', 'Adisiona iha karréta',
-          snackPosition: SnackPosition.BOTTOM);
+      final res = await _api.post('/cart/add/', body: {
+        'product_id': productId,
+        'product_name': name,
+        'product_image': imageUrl,
+        'price': price.toString(),
+      });
+      if (res.statusCode == 201 || res.statusCode == 200) {
+        await fetchCart();
+        Get.snackbar('Suksesu', 'Adisiona iha karréta',
+            snackPosition: SnackPosition.BOTTOM);
+      }
     } catch (e) {
       Get.snackbar('Sala', 'Falha atu adisiona iha karréta',
           snackPosition: SnackPosition.BOTTOM);
@@ -85,10 +81,13 @@ class CartController extends GetxController {
     }
 
     try {
-      Database db = await DatabaseHelper().database;
-      await db.update('cart', {'quantity': newQuantity},
-          where: 'id = ?', whereArgs: [itemId]);
-      await fetchCart();
+      final id = int.tryParse(itemId) ?? 0;
+      final res = await _api.put('/cart/item/$id/', body: {
+        'quantity': newQuantity,
+      });
+      if (res.statusCode == 200) {
+        await fetchCart();
+      }
     } catch (e) {
       print('Error updating quantity: $e');
     }
@@ -96,8 +95,8 @@ class CartController extends GetxController {
 
   Future<void> removeFromCart(String itemId) async {
     try {
-      Database db = await DatabaseHelper().database;
-      await db.delete('cart', where: 'id = ?', whereArgs: [itemId]);
+      final id = int.tryParse(itemId) ?? 0;
+      await _api.delete('/cart/item/$id/');
       await fetchCart();
     } catch (e) {
       print('Error removing from cart: $e');
@@ -106,9 +105,7 @@ class CartController extends GetxController {
 
   Future<void> clearCart() async {
     try {
-      Database db = await DatabaseHelper().database;
-      await db.delete('cart',
-          where: 'user_id = ?', whereArgs: [_authController.userId]);
+      await _api.delete('/cart/clear/');
       cartItems.clear();
       totalPrice.value = 0;
     } catch (e) {

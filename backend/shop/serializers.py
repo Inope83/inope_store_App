@@ -30,7 +30,8 @@ class ProductListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'category', 'category_id', 'price',
             'original_price', 'description', 'image_urls', 'first_image',
-            'stock', 'is_active', 'created_at', 'has_discount', 'discount_percent',
+            'stock', 'is_active', 'rating', 'sizes', 'colors',
+            'created_at', 'has_discount', 'discount_percent',
         ]
 
     def get_image_urls(self, obj):
@@ -62,6 +63,7 @@ class ProductWriteSerializer(serializers.ModelSerializer):
         fields = [
             'name', 'category', 'price', 'original_price',
             'description', 'stock', 'is_active',
+            'rating', 'sizes', 'colors',
         ]
 
 

@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/order_controller.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  String _fmt(double price) =>
-      price.toInt().toString().replaceAllMapped(
+  String _fmt(double value) =>
+      value.toInt().toString().replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
 
   Color _statusColor(String status) {
@@ -17,6 +16,7 @@ class ProfileScreen extends StatelessWidget {
         return const Color(0xFFF59E0B);
       case 'processing':
         return const Color(0xFF3B82F6);
+      case 'finished':
       case 'completed':
         return const Color(0xFF22C55E);
       case 'cancelled':
@@ -32,6 +32,7 @@ class ProfileScreen extends StatelessWidget {
         return 'Hein';
       case 'processing':
         return 'Prosesando';
+      case 'finished':
       case 'completed':
         return 'Kompletu';
       case 'cancelled':
@@ -58,7 +59,6 @@ class ProfileScreen extends StatelessWidget {
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // ── Header Profile ────────────────────────────────
             SliverToBoxAdapter(
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 24),
@@ -111,7 +111,6 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
 
-            // ── Account Info Section ──────────────────────────
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
@@ -154,7 +153,6 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
 
-            // ── Orders Summary ────────────────────────────────
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
@@ -171,8 +169,8 @@ class ProfileScreen extends StatelessWidget {
             SliverToBoxAdapter(
               child: Obx(() {
                 final orders = orderController.orders;
-                final pending = orders.where((o) => o['status'] == 'pending').length;
-                final finished = orders.where((o) => o['status'] == 'finished' || o['status'] == 'completed').length;
+                final pending = orders.where((o) => o.status == 'pending').length;
+                final finished = orders.where((o) => o.status == 'finished' || o.status == 'completed').length;
 
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -189,7 +187,6 @@ class ProfileScreen extends StatelessWidget {
               }),
             ),
 
-            // ── Recent Orders Title ───────────────────────────
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
@@ -246,17 +243,11 @@ class ProfileScreen extends StatelessWidget {
                 delegate: SliverChildBuilderDelegate(
                   (_, i) {
                     final order = orders[i];
-                    final status = order['status'] ?? 'pending';
-                    final total =
-                        (order['total'] as num?)?.toDouble() ?? 0.0;
-                    final createdAt = order['created_at'];
-                    String dateStr = '';
-                    if (createdAt is Timestamp) {
-                      final d = createdAt.toDate();
-                      dateStr = '${d.day}/${d.month}/${d.year}';
-                    }
-                    final items =
-                        List<dynamic>.from(order['items'] ?? []);
+                    final status = order.status;
+                    final total = order.total;
+                    final createdAt = order.createdAt;
+                    String dateStr = '${createdAt.day}/${createdAt.month}/${createdAt.year}';
+                    final items = order.items;
 
                     return Container(
                       margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -279,7 +270,7 @@ class ProfileScreen extends StatelessWidget {
                                 MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                order['id'] ?? '-',
+                                'ORD-${order.id}',
                                 style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -338,7 +329,6 @@ class ProfileScreen extends StatelessWidget {
               );
             }),
 
-            // ── Admin Panel Button (If Admin) ────────────────
             Obx(() {
               if (authController.isAdmin) {
                 return SliverToBoxAdapter(
@@ -379,7 +369,6 @@ class ProfileScreen extends StatelessWidget {
               return const SliverToBoxAdapter(child: SizedBox.shrink());
             }),
 
-            // ── Logout Button ─────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
@@ -395,6 +384,7 @@ class ProfileScreen extends StatelessWidget {
                       onConfirm: () {
                         Get.back();
                         authController.signOut();
+                        Get.offAllNamed('/login');
                       },
                     );
                   },

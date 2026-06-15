@@ -13,9 +13,9 @@ class ApiService {
     }
 
     if (defaultTargetPlatform == TargetPlatform.android) {
-      // 10.0.2.2 is for emulator.
-      // 192.168.68.118 is your local IP for physical handphone.
-      return 'http://192.168.68.118:8000/api'; 
+      // 10.0.2.2 is for emulator (Android emulator → host machine).
+      // Change this IP to your computer's current WiFi IP for physical phone testing.
+      return 'http://10.157.246.209:8000/api'; 
     }
 
     // For iOS simulator, macOS, Linux, Windows
@@ -35,14 +35,26 @@ class ApiService {
   String? get refreshToken => _refreshToken;
 
   Future<void> init() async {
-    _accessToken = await _storage.read(key: 'access_token');
-    _refreshToken = await _storage.read(key: 'refresh_token');
+    try {
+      _accessToken = await _storage.read(key: 'access_token');
+      _refreshToken = await _storage.read(key: 'refresh_token');
+    } catch (e) {
+      // Stale/corrupted encrypted storage (e.g. after reinstall with a
+      // different keystore key) causes decryption to fail. Wipe and continue.
+      debugPrint('Secure storage read failed, clearing: $e');
+      try {
+        await _storage.deleteAll();
+      } catch (_) {}
+      _accessToken = null;
+      _refreshToken = null;
+    }
   }
 
 Map<String, String> get _headers {
   print('Access token: $_accessToken');
   return {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
     if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
   };
 }

@@ -80,11 +80,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _ProductCard(
                       product: products[index],
-                      onAddToCart: () => _cartController.addItem(
-                        productId: products[index].id,
-                        productName: products[index].name,
-                        productImage: products[index].firstImage,
+                      onAddToCart: () => _cartController.addToCart(
+                        productId: products[index].id.toString(),
+                        name: products[index].name,
                         price: products[index].price,
+                        imageUrl: products[index].firstImage,
                       ),
                     ),
                     childCount: products.length,

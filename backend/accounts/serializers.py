@@ -45,7 +45,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         from django.conf import settings
         is_admin = email.lower().strip() == settings.ADMIN_EMAIL
 
-        if is_admin or not Profile.objects.exists():
+        if is_admin:
             role = 'admin'
             user.is_staff = True
             user.save(update_fields=['is_staff'])

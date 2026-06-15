@@ -16,7 +16,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final OrderController orderController = Get.find();
 
   final TextEditingController addressController = TextEditingController();
-  String selectedPaymentMethod = 'cod'; // 'cod' or 'bank'
+  String selectedPaymentMethod = 'cod';
   bool isCreatingOrder = false;
 
   final double shippingFee = 15000.0;
@@ -41,14 +41,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     setState(() => isCreatingOrder = true);
 
-    final total = cartController.totalPrice + shippingFee;
     final paymentLabel = selectedPaymentMethod == 'cod'
         ? 'Selu iha fatin (COD)'
         : 'Transferénsia Bankária';
 
     final success = await orderController.createOrder(
-      items: cartController.items,
-      total: total,
       address: address,
       paymentMethod: paymentLabel,
     );
@@ -56,10 +53,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     setState(() => isCreatingOrder = false);
 
     if (success) {
-      // Clear the cart
-      await cartController.clearCart();
-
-      // Show beautiful success dialog
       Get.defaultDialog(
         title: 'Pedidu Suksesu',
         middleText: 'Obrigadu barak! Ita-boot nia pedidu rejista ona.',
@@ -67,8 +60,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         confirmTextColor: Colors.white,
         buttonColor: const Color(0xFF1A1A1A),
         onConfirm: () {
-          Get.back(); // close dialog
-          Get.offAllNamed('/home'); // go back to customer home screen
+          Get.back();
+          Get.offAllNamed('/home');
         },
         barrierDismissible: false,
       );
@@ -83,7 +76,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final double totalPayable = cartController.totalPrice + shippingFee;
+    final double totalPayable = cartController.totalPrice.value + shippingFee;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -110,7 +103,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Delivery Address Section ───────────────────
               _buildSectionTitle('Diresaun Entrega'),
               const SizedBox(height: 8),
               Container(
@@ -179,7 +171,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               const SizedBox(height: 20),
 
-              // ── Payment Method Section ──────────────────────
               _buildSectionTitle('Métodu Pagamentu'),
               const SizedBox(height: 8),
               Container(
@@ -216,7 +207,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               const SizedBox(height: 20),
 
-              // ── Order Items Section ─────────────────────────
               _buildSectionTitle('Resumu Pedidu'),
               const SizedBox(height: 8),
               Container(
@@ -303,7 +293,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               const SizedBox(height: 20),
 
-              // ── Price Details Section ───────────────────────
               _buildSectionTitle('Detalle Pagamentu'),
               const SizedBox(height: 8),
               Container(
@@ -322,7 +311,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 child: Column(
                   children: [
                     _buildPriceRow(
-                        'Subtotal', 'Rp ${_fmt(cartController.totalPrice)}'),
+                        'Subtotal', 'Rp ${_fmt(cartController.totalPrice.value)}'),
                     const SizedBox(height: 10),
                     _buildPriceRow('Porte (Frete)', 'Rp ${_fmt(shippingFee)}'),
                     const Padding(
@@ -356,7 +345,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               const SizedBox(height: 32),
 
-              // ── Place Order Button ──────────────────────────
               CustomButton(
                 onPressed: _handlePlaceOrder,
                 text: 'Konfirma Pedidu',
@@ -374,15 +362,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Padding(
       padding: const EdgeInsets.only(left: 4),
         child: Text(
-          title ,
+          title,
          style: const TextStyle(
         fontSize: 15,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF1A1A1A), 
+        color: Color(0xFF1A1A1A),
         )
-        
       ),
-      
     );
   }
 

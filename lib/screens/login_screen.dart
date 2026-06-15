@@ -93,7 +93,9 @@ class LoginScreen extends StatelessWidget {
                         email: emailController.text.trim(),
                         password: passwordController.text,
                       );
-                      if (!success) {
+                      if (success) {
+                        Get.offAllNamed('/home');
+                      } else {
                         Get.snackbar('Sala', _authController.errorMessage.value,
                             snackPosition: SnackPosition.BOTTOM,
                             backgroundColor: Colors.red,

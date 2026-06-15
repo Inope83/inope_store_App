@@ -224,11 +224,11 @@ class ShopScreen extends StatelessWidget {
                   itemCount: products.length,
                   itemBuilder: (_, i) => _ShopProductCard(
                     product: products[i],
-                    onAddToCart: () => cartController.addItem(
-                      productId: products[i].id,
-                      productName: products[i].name,
-                      productImage: products[i].firstImage,
+                    onAddToCart: () => cartController.addToCart(
+                      productId: products[i].id.toString(),
+                      name: products[i].name,
                       price: products[i].price,
+                      imageUrl: products[i].firstImage,
                     ),
                   ),
                 );

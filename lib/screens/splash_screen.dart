@@ -20,7 +20,11 @@ class _SplashScreenState extends State<SplashScreen> {
         return;
       }
       await auth.ensureUserLoaded();
-      Get.offAllNamed(auth.isAdmin ? '/admin' : '/home');
+      if (auth.isAdmin) {
+        Get.offAllNamed('/admin');
+      } else {
+        Get.offAllNamed('/home');
+      }
     });
   }
 
