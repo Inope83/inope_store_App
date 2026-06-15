@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/cart_controller.dart';
+import '../controllers/product_controller.dart';
 import '../models/cart_model.dart';
 
 class CartScreen extends StatelessWidget {
@@ -256,6 +257,13 @@ class _CartItemCard extends StatelessWidget {
     (m) => '${m[1]}.',
   );
 
+  int get _stock {
+    final product = Get.find<ProductController>().getProductById(item.productId);
+    return product?.stock ?? 0;
+  }
+
+  bool get _atMaxStock => _stock > 0 && item.quantity >= _stock;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -330,7 +338,11 @@ class _CartItemCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    _QtyButton(icon: Icons.add, onTap: onIncrease),
+                    _QtyButton(
+                      icon: Icons.add,
+                      onTap: _atMaxStock ? null : onIncrease,
+                      disabled: _atMaxStock,
+                    ),
                     const Spacer(),
                     GestureDetector(
                       onTap: onRemove,
@@ -353,22 +365,31 @@ class _CartItemCard extends StatelessWidget {
 
 class _QtyButton extends StatelessWidget {
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool disabled;
 
-  const _QtyButton({required this.icon, required this.onTap});
+  const _QtyButton({
+    required this.icon,
+    this.onTap,
+    this.disabled = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: disabled ? null : onTap,
       child: Container(
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: const Color(0xFFF0F0F0),
+          color: disabled ? Colors.grey.shade200 : const Color(0xFFF0F0F0),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, size: 16, color: const Color(0xFF1A1A1A)),
+        child: Icon(
+          icon,
+          size: 16,
+          color: disabled ? Colors.grey.shade400 : const Color(0xFF1A1A1A),
+        ),
       ),
     );
   }

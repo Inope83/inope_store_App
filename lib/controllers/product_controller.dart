@@ -89,4 +89,11 @@ class ProductController extends GetxController {
 
   void setCategory(String category) => selectedCategory.value = category;
   void setSearchQuery(String query) => searchQuery.value = query;
+
+  ProductModel? getProductById(String id) {
+    for (final p in allProducts) {
+      if (p.id.toString() == id) return p;
+    }
+    return null;
+  }
 }

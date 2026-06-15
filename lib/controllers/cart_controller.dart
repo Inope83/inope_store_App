@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../models/cart_model.dart';
 import '../services/api_service.dart';
 import 'auth_controller.dart';
+import 'product_controller.dart';
 
 class CartController extends GetxController {
   final ApiService _api = ApiService();
@@ -54,6 +55,24 @@ class CartController extends GetxController {
       return;
     }
 
+    final product = Get.find<ProductController>().getProductById(productId);
+    if (product != null && product.stock <= 0) {
+      Get.snackbar('Stock Mamuk', 'Produtu ne\'e stock mamuk',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    if (product != null) {
+      final existingIdx = cartItems.indexWhere((i) => i.productId == productId);
+      final currentQty = existingIdx >= 0 ? cartItems[existingIdx].quantity : 0;
+      if (currentQty + quantity > product.stock) {
+        Get.snackbar('Stock La To\'o',
+            'Stock disponivel: ${product.stock}',
+            snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
+    }
+
     isLoading.value = true;
     try {
       final res = await _api.post('/cart/add/', body: {
@@ -79,6 +98,20 @@ class CartController extends GetxController {
     if (newQuantity <= 0) {
       await removeFromCart(itemId);
       return;
+    }
+
+    CartItemModel? item;
+    for (final i in cartItems) {
+      if (i.id.toString() == itemId) { item = i; break; }
+    }
+    if (item != null) {
+      final product = Get.find<ProductController>().getProductById(item.productId);
+      if (product != null && newQuantity > product.stock) {
+        Get.snackbar('Stock La To\'o',
+            'Stock disponivel: ${product.stock}',
+            snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
     }
 
     try {

@@ -597,6 +597,26 @@ class _ProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                if (product.stock == 0)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'Stock\nMamuk',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -651,16 +671,16 @@ class _ProductCard extends StatelessWidget {
                       ],
                     ),
                     GestureDetector(
-                      onTap: onAddToCart,
+                      onTap: product.stock > 0 ? onAddToCart : null,
                       child: Container(
                         width: 30,
                         height: 30,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1A1A1A),
+                          color: product.stock > 0 ? const Color(0xFF1A1A1A) : Colors.grey.shade300,
                           borderRadius: BorderRadius.circular(9),
                         ),
-                        child: const Icon(
-                          Icons.add,
+                        child: Icon(
+                          product.stock > 0 ? Icons.add : Icons.block,
                           color: Colors.white,
                           size: 16,
                         ),
