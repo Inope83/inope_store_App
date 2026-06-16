@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../models/cart_model.dart';
 import '../services/api_service.dart';
 import 'auth_controller.dart';
+import 'product_controller.dart';
 
 class CartController extends GetxController {
   final ApiService _api = ApiService();
@@ -33,7 +35,7 @@ class CartController extends GetxController {
         _calculateTotal();
       }
     } catch (e) {
-      print('Error fetching cart: $e');
+      debugPrint('Error fetching cart: $e');
     } finally {
       isLoading.value = false;
     }
@@ -51,6 +53,24 @@ class CartController extends GetxController {
     if (!_authController.isLoggedIn) {
       Get.toNamed('/login');
       return;
+    }
+
+    final product = Get.find<ProductController>().getProductById(productId);
+    if (product != null && product.stock <= 0) {
+      Get.snackbar('Stock Mamuk', 'Produtu ne\'e stock mamuk',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    if (product != null) {
+      final existingIdx = cartItems.indexWhere((i) => i.productId == productId);
+      final currentQty = existingIdx >= 0 ? cartItems[existingIdx].quantity : 0;
+      if (currentQty + quantity > product.stock) {
+        Get.snackbar('Stock La To\'o',
+            'Stock disponivel: ${product.stock}',
+            snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
     }
 
     isLoading.value = true;
@@ -80,6 +100,20 @@ class CartController extends GetxController {
       return;
     }
 
+    CartItemModel? item;
+    for (final i in cartItems) {
+      if (i.id.toString() == itemId) { item = i; break; }
+    }
+    if (item != null) {
+      final product = Get.find<ProductController>().getProductById(item.productId);
+      if (product != null && newQuantity > product.stock) {
+        Get.snackbar('Stock La To\'o',
+            'Stock disponivel: ${product.stock}',
+            snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
+    }
+
     try {
       final id = int.tryParse(itemId) ?? 0;
       final res = await _api.put('/cart/item/$id/', body: {
@@ -89,7 +123,7 @@ class CartController extends GetxController {
         await fetchCart();
       }
     } catch (e) {
-      print('Error updating quantity: $e');
+      debugPrint('Error updating quantity: $e');
     }
   }
 
@@ -99,7 +133,7 @@ class CartController extends GetxController {
       await _api.delete('/cart/item/$id/');
       await fetchCart();
     } catch (e) {
-      print('Error removing from cart: $e');
+      debugPrint('Error removing from cart: $e');
     }
   }
 
@@ -109,7 +143,7 @@ class CartController extends GetxController {
       cartItems.clear();
       totalPrice.value = 0;
     } catch (e) {
-      print('Error clearing cart: $e');
+      debugPrint('Error clearing cart: $e');
     }
   }
 
