@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../models/product_model.dart';
 import '../services/api_service.dart';
@@ -39,7 +40,7 @@ class ProductController extends GetxController {
         _refreshDerivedLists();
       }
     } catch (e) {
-      print('Error fetching products: $e');
+      debugPrint('Error fetching products: $e');
     } finally {
       isLoading.value = false;
     }
@@ -54,7 +55,7 @@ class ProductController extends GetxController {
         adminProducts.value = results.map((e) => ProductModel.fromJson(e)).toList();
       }
     } catch (e) {
-      print('Error fetching products for admin: $e');
+      debugPrint('Error fetching products for admin: $e');
     }
   }
 

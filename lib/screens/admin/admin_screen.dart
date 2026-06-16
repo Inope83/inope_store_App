@@ -225,7 +225,7 @@ class _DashboardTab extends StatelessWidget {
                 children: [
                   const Text('Total Receita (Orden Kompleta)', style: TextStyle(fontSize: 13, color: Color(0xFF888888))),
                   const SizedBox(height: 4),
-                  Text('Rp ${_fmt(admin.totalRevenue.value)}',
+                  Text('\$ ${_fmt(admin.totalRevenue.value)}',
                       style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
                 ],
               ),
@@ -1049,7 +1049,7 @@ class _ProductFormScreenState extends State<_ProductFormScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _Field(controller: _priceCtrl, label: 'Harga (Rp)',
+                  child: _Field(controller: _priceCtrl, label: 'Harga (\$)',
                       keyboardType: TextInputType.number,
                       validator: (v) {
                         if (v!.isEmpty) return 'Hatama harga';

@@ -4,6 +4,7 @@ import 'controllers/auth_controller.dart';
 import 'controllers/cart_controller.dart';
 import 'controllers/product_controller.dart';
 import 'controllers/order_controller.dart';
+import 'controllers/navigation_controller.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
@@ -18,6 +19,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Get.putAsync(() => AuthController().init());
+  Get.put(NavigationController());
   Get.put(CartController());
   Get.put(ProductController());
   Get.put(OrderController());
@@ -43,7 +45,7 @@ class InopeStore extends StatelessWidget {
         GetPage(name: '/login', page: () => LoginScreen()),
         GetPage(name: '/register', page: () => RegisterScreen()),
         GetPage(name: '/home', page: () => const MainNavigationScreen()),
-        GetPage(name: '/checkout', page: () => CheckoutScreen()),
+        GetPage(name: '/checkout', page: () => const CheckoutScreen()),
         GetPage(name: '/admin', page: () => const AdminScreen()),
       ],
       debugShowCheckedModeBanner: false,
@@ -51,44 +53,40 @@ class InopeStore extends StatelessWidget {
   }
 }
 
-class MainNavigationScreen extends StatefulWidget {
+class MainNavigationScreen extends StatelessWidget {
   const MainNavigationScreen({super.key});
 
   @override
-  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
-}
-
-class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const ShopScreen(),
-    const CartScreen(),
-    const ProfileScreen(),
-  ];
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF2D2D2D),
-        unselectedItemColor: const Color(0xFFAAAAAA),
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined), label: 'Baranda'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.grid_view_outlined), label: 'Shop'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_bag_outlined), label: 'Karréta'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline), label: 'Perfil'),
-        ],
+    final nav = Get.find<NavigationController>();
+    const screens = [
+      HomeScreen(),
+      ShopScreen(),
+      CartScreen(),
+      ProfileScreen(),
+    ];
+
+    return Obx(
+      () => Scaffold(
+        body: screens[nav.currentIndex.value],
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          selectedItemColor: const Color(0xFF2D2D2D),
+          unselectedItemColor: const Color(0xFFAAAAAA),
+          currentIndex: nav.currentIndex.value,
+          onTap: (index) => nav.goToTab(index),
+          items: const [
+            BottomNavigationBarItem(
+                icon: Icon(Icons.home_outlined), label: 'Baranda'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.grid_view_outlined), label: 'Shop'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.shopping_bag_outlined), label: 'Karréta'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.person_outline), label: 'Perfil'),
+          ],
+        ),
       ),
     );
   }

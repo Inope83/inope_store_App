@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/cart_controller.dart';
+import '../controllers/navigation_controller.dart';
 import '../models/cart_model.dart';
 
 class CartScreen extends StatelessWidget {
@@ -14,6 +15,7 @@ class CartScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final CartController cartController = Get.find();
+    final NavigationController navController = Get.find();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -120,7 +122,7 @@ class CartScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 24),
                         GestureDetector(
-                          onTap: () => Get.toNamed('/shop'),
+                          onTap: () => navController.goToShop(),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 28,

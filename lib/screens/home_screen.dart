@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/product_controller.dart';
 import '../controllers/cart_controller.dart';
+import '../controllers/navigation_controller.dart';
 import '../models/product_model.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final ProductController _productController = Get.find();
   final CartController _cartController = Get.find();
   final AuthController _authController = Get.find();
+  final NavigationController _navController = Get.find();
 
   int _currentBanner = 0;
   final PageController _bannerController = PageController();
@@ -43,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SliverToBoxAdapter(
               child: _buildSectionHeader(
                 'Produtu Foun',
-                onTap: () => Get.toNamed('/shop'),
+                onTap: () => _navController.goToShop(),
               ),
             ),
             // New Products Grid
@@ -144,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icons.shopping_bag_outlined,
                   dark: true,
                   badge: _cartController.itemCount,
-                  onTap: () => Get.toNamed('/cart'),
+                  onTap: () => _navController.goToCart(),
                 ),
               ),
             ],
@@ -158,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: GestureDetector(
-        onTap: () => Get.toNamed('/shop'),
+        onTap: () => _navController.goToShop(),
         child: Container(
           height: 50,
           decoration: BoxDecoration(

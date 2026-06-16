@@ -15,7 +15,7 @@ class ApiService {
     if (defaultTargetPlatform == TargetPlatform.android) {
       // 10.0.2.2 is for emulator (Android emulator → host machine).
       // Change this IP to your computer's current WiFi IP for physical phone testing.
-      return 'http://10.157.246.209:8000/api'; 
+      return 'http://172.19.190.209:8000/api'; 
     }
 
     // For iOS simulator, macOS, Linux, Windows
@@ -51,7 +51,6 @@ class ApiService {
   }
 
 Map<String, String> get _headers {
-  print('Access token: $_accessToken');
   return {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

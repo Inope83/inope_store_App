@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../models/cart_model.dart';
 import '../services/api_service.dart';
@@ -33,7 +34,7 @@ class CartController extends GetxController {
         _calculateTotal();
       }
     } catch (e) {
-      print('Error fetching cart: $e');
+      debugPrint('Error fetching cart: $e');
     } finally {
       isLoading.value = false;
     }
@@ -89,7 +90,7 @@ class CartController extends GetxController {
         await fetchCart();
       }
     } catch (e) {
-      print('Error updating quantity: $e');
+      debugPrint('Error updating quantity: $e');
     }
   }
 
@@ -99,7 +100,7 @@ class CartController extends GetxController {
       await _api.delete('/cart/item/$id/');
       await fetchCart();
     } catch (e) {
-      print('Error removing from cart: $e');
+      debugPrint('Error removing from cart: $e');
     }
   }
 
@@ -109,7 +110,7 @@ class CartController extends GetxController {
       cartItems.clear();
       totalPrice.value = 0;
     } catch (e) {
-      print('Error clearing cart: $e');
+      debugPrint('Error clearing cart: $e');
     }
   }
 
