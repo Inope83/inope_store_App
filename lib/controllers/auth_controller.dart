@@ -22,7 +22,9 @@ class AuthController extends GetxController {
       final res = await _api.get('/auth/profile/');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
-        currentUser.value = UserModel.fromJson(data);
+        if (data is Map<String, dynamic>) {
+          currentUser.value = UserModel.fromJson(data);
+        }
       }
     } catch (_) {}
   }
@@ -46,8 +48,8 @@ class AuthController extends GetxController {
         errorMessage.value = result['error'].toString();
         return false;
       }
-      if (result['user'] != null) {
-        currentUser.value = UserModel.fromJson(result['user']);
+      if (result['user'] is Map<String, dynamic>) {
+        currentUser.value = UserModel.fromJson(result['user'] as Map<String, dynamic>);
       }
       return true;
     } catch (e) {
@@ -70,8 +72,8 @@ class AuthController extends GetxController {
         errorMessage.value = result['error'].toString();
         return false;
       }
-      if (result['user'] != null) {
-        currentUser.value = UserModel.fromJson(result['user']);
+      if (result['user'] is Map<String, dynamic>) {
+        currentUser.value = UserModel.fromJson(result['user'] as Map<String, dynamic>);
       }
       return true;
     } catch (e) {

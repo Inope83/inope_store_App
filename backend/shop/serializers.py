@@ -83,6 +83,7 @@ class CartItemAddSerializer(serializers.Serializer):
     product_name = serializers.CharField()
     product_image = serializers.CharField(required=False, allow_blank=True)
     price = serializers.DecimalField(max_digits=12, decimal_places=2)
+    quantity = serializers.IntegerField(default=1, min_value=1)
 
 
 class CartItemUpdateSerializer(serializers.Serializer):
@@ -97,14 +98,16 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = [
             'id', 'user', 'user_name', 'user_email', 'items',
-            'total', 'address', 'payment_method', 'payment_proof', 'status',
+            'total', 'address', 'phone', 'email', 'payment_method', 'payment_proof', 'status',
             'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 
 
 class OrderCreateSerializer(serializers.Serializer):
-    address = serializers.CharField()
+    address = serializers.CharField(required=False, allow_blank=True)
+    phone = serializers.CharField(required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
     payment_method = serializers.CharField(default='Cash on Delivery')
 
 

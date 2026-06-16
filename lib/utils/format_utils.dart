@@ -11,9 +11,16 @@ class FormatUtils {
   }
 
   static String formatPrice(double price) {
-    return '$currencySymbol${price.toInt().toString().replaceAllMapped(
+    final intPart = price.toInt();
+    final hasDecimal = (price - intPart) > 0.01;
+    final formatted = intPart.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (m) => '${m[1]}.',
-    )}';
+    );
+    if (hasDecimal) {
+      final dec = ((price - intPart) * 100).round().toString().padLeft(2, '0');
+      return '$currencySymbol$formatted,$dec';
+    }
+    return '$currencySymbol$formatted';
   }
 }

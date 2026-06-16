@@ -87,6 +87,13 @@ class ProductController extends GetxController {
     return products;
   }
 
+  List<ProductModel> get homeFilteredNewProducts {
+    if (selectedCategory.value == 'Hotu') return newProducts;
+    return newProducts
+        .where((p) => p.category == selectedCategory.value)
+        .toList();
+  }
+
   void setCategory(String category) => selectedCategory.value = category;
   void setSearchQuery(String query) => searchQuery.value = query;
 

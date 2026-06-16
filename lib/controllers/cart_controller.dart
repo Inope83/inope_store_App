@@ -45,8 +45,6 @@ class CartController extends GetxController {
     required String productId,
     required String name,
     required double price,
-    String size = '',
-    String color = '',
     required String imageUrl,
     int quantity = 1,
   }) async {
@@ -80,6 +78,7 @@ class CartController extends GetxController {
         'product_name': name,
         'product_image': imageUrl,
         'price': price.toString(),
+        'quantity': quantity,
       });
       if (res.statusCode == 201 || res.statusCode == 200) {
         await fetchCart();

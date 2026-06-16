@@ -4,6 +4,7 @@ import 'controllers/auth_controller.dart';
 import 'controllers/cart_controller.dart';
 import 'controllers/product_controller.dart';
 import 'controllers/order_controller.dart';
+import 'controllers/admin_controller.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
@@ -21,6 +22,7 @@ void main() async {
   Get.put(CartController());
   Get.put(ProductController());
   Get.put(OrderController());
+  Get.put(AdminController());
 
   runApp(const InopeStore());
 }
@@ -46,7 +48,11 @@ class InopeStore extends StatelessWidget {
         GetPage(name: '/shop', page: () => const ShopScreen()),
         GetPage(name: '/cart', page: () => const CartScreen()),
         GetPage(name: '/checkout', page: () => const CheckoutScreen()),
-        GetPage(name: '/admin', page: () => const AdminScreen()),
+        GetPage(name: '/admin', page: () {
+          final auth = Get.find<AuthController>();
+          if (!auth.isAdmin) return const _NotAdminScreen();
+          return const AdminScreen();
+        }),
       ],
       debugShowCheckedModeBanner: false,
     );
@@ -95,3 +101,40 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 }
+
+class _NotAdminScreen extends StatelessWidget {
+  const _NotAdminScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: AppBar(
+        title: const Text('Admin'),
+        backgroundColor: const Color(0xFF1A1A1A),
+        foregroundColor: Colors.white,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.lock_outline, size: 72, color: Color(0xFFCCCCCC)),
+            const SizedBox(height: 16),
+            const Text('Ita Boot la iha asesu ba admin',
+                style: TextStyle(fontSize: 16, color: Color(0xFF888888))),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => Get.offAllNamed('/home'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1A1A1A),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Fila ba Home'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

@@ -24,7 +24,7 @@ def register_view(request):
 
     user = serializer.save()
     refresh = RefreshToken.for_user(user)
-    profile = Profile.objects.get(user=user)  # created by serializer
+    profile, _ = Profile.objects.get_or_create(user=user)
 
     return Response({
         'access': str(refresh.access_token),
