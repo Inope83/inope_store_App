@@ -40,6 +40,8 @@ class OrderController extends GetxController {
   Future<bool> createOrder({
     required String paymentMethod,
     required String address,
+    String phone = '',
+    String email = '',
   }) async {
     if (Get.find<CartController>().cartItems.isEmpty) {
       Get.snackbar('Sala', 'Kareta seidauk iha');
@@ -50,6 +52,8 @@ class OrderController extends GetxController {
     try {
       final res = await _api.post('/orders/create/', body: {
         'address': address,
+        'phone': phone,
+        'email': email,
         'payment_method': paymentMethod,
       });
       if (res.statusCode == 201) {
@@ -58,7 +62,14 @@ class OrderController extends GetxController {
         Get.snackbar('Suksesu', 'Orde halo ho suksesu');
         return true;
       }
-      Get.snackbar('Sala', 'Falha atu halo orde');
+      String err;
+      try {
+        final body = jsonDecode(res.body);
+        err = body is Map ? (body['error'] ?? 'Falha atu halo orde').toString() : 'Falha atu halo orde';
+      } catch (_) {
+        err = 'Falha atu halo orde';
+      }
+      Get.snackbar('Sala', err);
       return false;
     } catch (e) {
       Get.snackbar('Sala', 'Falha atu halo orde');

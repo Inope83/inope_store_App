@@ -13,7 +13,8 @@ class ApiService {
     }
 
     if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://172.19.190.209:8000/api';
+      // 10.0.2.2 is for emulator; use your computer's LAN IP for physical phone.
+      return 'http://192.168.68.118:8000/api';
     }
 
     // For iOS simulator, macOS, Linux, Windows
@@ -23,7 +24,6 @@ class ApiService {
   static final ApiService _instance = ApiService._();
   factory ApiService() => _instance;
   ApiService._();
-
 
   final _storage = const FlutterSecureStorage();
   String? _accessToken;
@@ -48,14 +48,14 @@ class ApiService {
     }
   }
 
-Map<String, String> get _headers {
-  return {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
-  };
-}
-  
+  Map<String, String> get _headers {
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
+    };
+  }
+
   Future<void> _saveTokens(String access, String refresh) async {
     _accessToken = access;
     _refreshToken = refresh;
@@ -183,7 +183,9 @@ Map<String, String> get _headers {
       );
 
       if (res.body.isEmpty) {
-        return {'error': 'Server returned empty response (Status ${res.statusCode})'};
+        return {
+          'error': 'Server returned empty response (Status ${res.statusCode})'
+        };
       }
 
       final data = jsonDecode(res.body);
@@ -209,7 +211,9 @@ Map<String, String> get _headers {
       );
 
       if (res.body.isEmpty) {
-        return {'error': 'Server returned empty response (Status ${res.statusCode})'};
+        return {
+          'error': 'Server returned empty response (Status ${res.statusCode})'
+        };
       }
 
       final data = jsonDecode(res.body);

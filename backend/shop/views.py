@@ -114,12 +114,13 @@ def cart_add(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     data = serializer.validated_data
+    qty = data.get('quantity', 1)
     existing = CartItem.objects.filter(
         user=request.user, product_id=data['product_id']
     ).first()
 
     if existing:
-        existing.quantity += 1
+        existing.quantity += qty
         existing.save()
         return Response(CartItemSerializer(existing).data)
 
@@ -129,7 +130,7 @@ def cart_add(request):
         product_name=data['product_name'],
         product_image=data.get('product_image', ''),
         price=data['price'],
-        quantity=1,
+        quantity=qty,
     )
     return Response(CartItemSerializer(item).data, status=status.HTTP_201_CREATED)
 
@@ -191,8 +192,15 @@ def order_create(request):
     items_data = []
     for item in cart_items:
         try:
-            product = Product.objects.get(id=int(item.product_id))
-        except (Product.DoesNotExist, ValueError):
+            product_id = int(item.product_id)
+        except (ValueError, TypeError):
+            return Response(
+                {'error': f"Produtu '{item.product_name}' la iha (ID inválidu)"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
             return Response(
                 {'error': f"Produtu '{item.product_name}' la iha"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -217,12 +225,18 @@ def order_create(request):
             user=request.user,
             items=items_data,
             total=total,
-            address=serializer.validated_data['address'],
+            address=serializer.validated_data.get('address', ''),
+            phone=serializer.validated_data.get('phone', ''),
+            email=serializer.validated_data.get('email', ''),
             payment_method=serializer.validated_data.get('payment_method', 'Cash on Delivery'),
             payment_proof=request.FILES.get('payment_proof'),
         )
         for item in cart_items:
-            product = Product.objects.get(id=int(item.product_id))
+            try:
+                product_id = int(item.product_id)
+            except (ValueError, TypeError):
+                continue
+            product = Product.objects.get(id=product_id)
             product.stock -= item.quantity
             product.save()
         cart_items.delete()

@@ -59,14 +59,21 @@ class AdminController extends GetxController {
 
   Future<void> addCategory(String name) async {
     try {
-      await _api.post('/categories/', body: {'name': name});
-      await fetchCategories();
-      Get.snackbar('Suksesu', 'Kategoria foun hatama ona',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white);
+      final res = await _api.post('/categories/', body: {'name': name});
+      if (res.statusCode == 201) {
+        await fetchCategories();
+        Get.snackbar('Suksesu', 'Kategoria foun hatama ona',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white);
+      } else {
+        Get.snackbar('Error', 'La konsege hatama kategoria: Status ${res.statusCode}',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white);
+      }
     } catch (e) {
-      Get.snackbar('Error', 'La konsege hatama kategoria',
+      Get.snackbar('Error', 'La konsege hatama kategoria: $e',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red,
           colorText: Colors.white);
@@ -75,14 +82,21 @@ class AdminController extends GetxController {
 
   Future<void> deleteCategory(dynamic id) async {
     try {
-      await _api.delete('/categories/$id/');
-      await fetchCategories();
-      Get.snackbar('Suksesu', 'Kategoria hamos ona',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white);
+      final res = await _api.delete('/categories/$id/');
+      if (res.statusCode == 204) {
+        await fetchCategories();
+        Get.snackbar('Suksesu', 'Kategoria hamos ona',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white);
+      } else {
+        Get.snackbar('Error', 'La konsege hamos kategoria: Status ${res.statusCode}',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white);
+      }
     } catch (e) {
-      Get.snackbar('Error', 'La konsege hamos kategoria',
+      Get.snackbar('Error', 'La konsege hamos kategoria: $e',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red,
           colorText: Colors.white);
@@ -102,6 +116,10 @@ class AdminController extends GetxController {
       }
     } catch (e) {
       debugPrint('Error loading stats: $e');
+      Get.snackbar('Avisu', 'La konsege karga estatístika',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white);
     }
   }
 
@@ -156,17 +174,24 @@ class AdminController extends GetxController {
 
   Future<void> updateOrderStatus(String orderId, String status) async {
     try {
-      await _api.put('/admin/orders/$orderId/status/', body: {'status': status});
-      await Future.wait([fetchAllOrders(), _loadStats()]);
-      Get.snackbar('Suksesu',
-          status == 'finished'
-              ? 'Orden marka ona kompleta'
-              : 'Status orden atualiza ona',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white);
+      final res = await _api.put('/admin/orders/$orderId/status/', body: {'status': status});
+      if (res.statusCode == 200) {
+        await Future.wait([fetchAllOrders(), _loadStats()]);
+        Get.snackbar('Suksesu',
+            status == 'finished'
+                ? 'Orden marka ona kompleta'
+                : 'Status orden atualiza ona',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white);
+      } else {
+        Get.snackbar('Error', 'La konsege atualiza orden: Status ${res.statusCode}',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white);
+      }
     } catch (e) {
-      Get.snackbar('Error', 'La konsege atualiza orden',
+      Get.snackbar('Error', 'La konsege atualiza orden: $e',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red,
           colorText: Colors.white);

@@ -7,8 +7,9 @@ import 'package:inope_store/controllers/order_controller.dart';
 import 'package:inope_store/main.dart';
 
 void main() {
-  setUp(() {
-    Get.put(AuthController());
+  setUp(() async {
+    Get.reset();
+    await Get.putAsync(() => AuthController().init());
     Get.put(CartController());
     Get.put(ProductController());
     Get.put(OrderController());

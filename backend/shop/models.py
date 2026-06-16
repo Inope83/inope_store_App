@@ -82,6 +82,8 @@ class Order(models.Model):
     items = models.JSONField(default=list)
     total = models.DecimalField(max_digits=14, decimal_places=2)
     address = models.TextField(blank=True, default='')
+    phone = models.CharField(max_length=20, blank=True, default='')
+    email = models.EmailField(blank=True, default='')
     payment_method = models.CharField(max_length=100, default='Cash on Delivery')
     payment_proof = models.ImageField(upload_to='payment_proofs/', null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
