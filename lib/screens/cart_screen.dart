@@ -195,7 +195,7 @@ class CartScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '\$ ${_fmt(cartController.totalPrice.value)}',
+                          _fmt(cartController.totalPrice.value),
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -252,10 +252,14 @@ class _CartItemCard extends StatelessWidget {
     required this.onRemove,
   });
 
-  String _fmt(double price) => price.toInt().toString().replaceAllMapped(
-    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-    (m) => '${m[1]}.',
-  );
+  String _fmt(double price) {
+    final intPart = price.toInt();
+    final formatted = intPart.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    );
+    return '\$$formatted';
+  }
 
   int get _stock {
     final product = Get.find<ProductController>().getProductById(item.productId);
@@ -317,7 +321,7 @@ class _CartItemCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '\$ ${_fmt(item.price)}',
+                  _fmt(item.price),
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,

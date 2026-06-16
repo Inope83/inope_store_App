@@ -6,9 +6,14 @@ import '../controllers/order_controller.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  String _fmt(double value) =>
-      value.toInt().toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+  String _fmt(double value) {
+    final intPart = value.toInt();
+    final formatted = intPart.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    );
+    return '\$$formatted';
+  }
 
   Color _statusColor(String status) {
     switch (status) {
@@ -312,7 +317,7 @@ class ProfileScreen extends StatelessWidget {
                                       fontSize: 13,
                                       color: Color(0xFF888888))),
                               Text(
-                                '\$ ${_fmt(total)}',
+                                _fmt(total),
                                 style: const TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.bold,

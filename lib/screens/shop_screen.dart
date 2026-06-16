@@ -255,10 +255,14 @@ class _ShopProductCard extends StatelessWidget {
 
   const _ShopProductCard({required this.product, required this.onAddToCart});
 
-  String _fmt(double price) => price.toInt().toString().replaceAllMapped(
-    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-    (m) => '${m[1]}.',
-  );
+  String _fmt(double price) {
+    final intPart = price.toInt();
+    final formatted = intPart.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    );
+    return '\$$formatted';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -339,6 +343,22 @@ class _ShopProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                if (product.stock > 0 && product.stock <= 5)
+                  Positioned(
+                    bottom: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'Stok: ${product.stock}',
+                        style: const TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -366,12 +386,12 @@ class _ShopProductCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '\$ ${_fmt(product.price)}',
+                          _fmt(product.price),
                           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A)),
                         ),
                         if (product.hasDiscount)
                           Text(
-                            '\$ ${_fmt(product.originalPrice!)}',
+                            _fmt(product.originalPrice!),
                             style: const TextStyle(
                               fontSize: 10,
                               color: Color(0xFFAAAAAA),

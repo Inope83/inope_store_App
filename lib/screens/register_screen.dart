@@ -201,7 +201,11 @@ class RegisterScreen extends StatelessWidget {
     );
 
     if (success) {
-      Get.offAllNamed('/home');
+      if (_authController.isAdmin) {
+        Get.offAllNamed('/admin');
+      } else {
+        Get.offAllNamed('/home');
+      }
     } else {
       Get.snackbar(
         'Sala',
