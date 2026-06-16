@@ -93,7 +93,10 @@ class _AdminScreenState extends State<AdminScreen> {
         foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshCurrentTab),
-          IconButton(icon: const Icon(Icons.logout), onPressed: () => auth.signOut()),
+          IconButton(icon: const Icon(Icons.logout), onPressed: () {
+            auth.signOut();
+            Get.offAllNamed('/login');
+          }),
         ],
       ),
       floatingActionButton: (_tabIndex == 1 || _tabIndex == 3)
@@ -118,7 +121,9 @@ class _AdminScreenState extends State<AdminScreen> {
           _DashboardTab(onOpenOrders: () => setState(() => _tabIndex = 2)),
           _ProductsTab(onDelete: _confirmDelete),
           const _OrdersTab(),
-          const _CategoriesTab(),
+          _CategoriesTab(
+            onEditCategory: (cat) => _showCategoryDialog(context, category: cat),
+          ),
           const _UsersTab(),
         ],
       ),
@@ -155,12 +160,31 @@ class _AdminScreenState extends State<AdminScreen> {
       onConfirm: () async {
         if (ctrl.text.trim().isEmpty) return;
         final admin = Get.find<AdminController>();
-        if (category == null) {
-          await admin.addCategory(ctrl.text.trim());
-        } else {
-          final api = ApiService();
-          await api.put('/categories/${category['id']}/', body: {'name': ctrl.text.trim()});
-          await admin.fetchCategories();
+        final prodCtrl = Get.find<ProductController>();
+        try {
+          if (category == null) {
+            await admin.addCategory(ctrl.text.trim());
+          } else {
+            final api = ApiService();
+            final res = await api.put('/categories/${category['id']}/',
+                body: {'name': ctrl.text.trim()});
+            if (res.statusCode == 200) {
+              await admin.fetchCategories();
+              await prodCtrl.fetchProductsForAdmin();
+            } else {
+              Get.snackbar('Error', 'Falha atualiza kategoria',
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: Colors.red,
+                  colorText: Colors.white);
+              return;
+            }
+          }
+        } catch (e) {
+          Get.snackbar('Error', 'Falha: $e',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.red,
+              colorText: Colors.white);
+          return;
         }
         Get.back();
       },
@@ -173,10 +197,14 @@ class _DashboardTab extends StatelessWidget {
   final VoidCallback onOpenOrders;
   const _DashboardTab({required this.onOpenOrders});
 
-  String _fmt(double n) => n.toInt().toString().replaceAllMapped(
-    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-    (m) => '${m[1]}.',
-  );
+  String _fmt(double n) {
+    final intPart = n.toInt();
+    final formatted = intPart.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    );
+    return '\$$formatted';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -225,7 +253,7 @@ class _DashboardTab extends StatelessWidget {
                 children: [
                   const Text('Total Receita (Orden Kompleta)', style: TextStyle(fontSize: 13, color: Color(0xFF888888))),
                   const SizedBox(height: 4),
-                  Text('\$ ${_fmt(admin.totalRevenue.value)}',
+                  Text(_fmt(admin.totalRevenue.value),
                       style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
                 ],
               ),
@@ -419,8 +447,9 @@ class _OrderCard extends StatelessWidget {
     final total = FormatUtils.parseDouble(order['total']);
     final userId = order['user'] is int ? order['user'] : (order['user']?.toString());
     final customer = admin.userNameFor(userId) ?? '—';
-    final items = order['items'] as List<dynamic>? ?? [];
+    final items = order['items'] is List ? (order['items'] as List<dynamic>) : [];
     final orderId = order['id']?.toString() ?? '';
+    if (orderId.isEmpty) return const SizedBox.shrink();
 
     Color statusColor;
     String statusLabel;
@@ -482,7 +511,7 @@ class _OrderCard extends StatelessWidget {
           const Divider(height: 20),
           Row(
             children: [
-              Text('\$ ${FormatUtils.formatPrice(total)}',
+              Text(FormatUtils.formatPrice(total),
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
               const Spacer(),
               if (isPending) ...[
@@ -525,7 +554,8 @@ class _OrderCard extends StatelessWidget {
 
 // ── Categories tab ──────────────────────────────────────────
 class _CategoriesTab extends StatelessWidget {
-  const _CategoriesTab();
+  final void Function(Map<String, dynamic> category)? onEditCategory;
+  const _CategoriesTab({this.onEditCategory});
 
   @override
   Widget build(BuildContext context) {
@@ -560,8 +590,27 @@ class _CategoriesTab extends StatelessWidget {
                 Expanded(child: Text(cat['name'] ?? '',
                     style: const TextStyle(fontWeight: FontWeight.bold))),
                 IconButton(
+                  icon: const Icon(Icons.edit_outlined, color: Color(0xFF1A1A1A)),
+                  onPressed: () {
+                    if (onEditCategory != null) onEditCategory!(cat);
+                  },
+                ),
+                IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  onPressed: () => admin.deleteCategory(cat['id']),
+                  onPressed: () {
+                    Get.defaultDialog(
+                      title: 'Hamos Kategoria',
+                      middleText: 'Ita boot hakarak hamos "${cat['name']}"?',
+                      textConfirm: 'Hamos',
+                      textCancel: 'Lae',
+                      confirmTextColor: Colors.white,
+                      buttonColor: const Color(0xFFE53935),
+                      onConfirm: () {
+                        Get.back();
+                        admin.deleteCategory(cat['id']);
+                      },
+                    );
+                  },
                 ),
               ],
             ),
@@ -688,10 +737,14 @@ class _ProductAdminCard extends StatelessWidget {
   final VoidCallback onDelete;
   const _ProductAdminCard({required this.product, required this.onEdit, required this.onDelete});
 
-  String _fmt(double price) => price.toInt().toString().replaceAllMapped(
-    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-    (m) => '${m[1]}.',
-  );
+  String _fmt(double price) {
+    final intPart = price.toInt();
+    final formatted = intPart.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    );
+    return '\$$formatted';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -729,7 +782,7 @@ class _ProductAdminCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Text('\$ ${_fmt(product.price)}',
+                    Text(_fmt(product.price),
                         style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
                     const SizedBox(width: 8),
                     Container(
@@ -855,17 +908,17 @@ class _ProductFormScreenState extends State<_ProductFormScreen> {
       final isEdit = widget.product != null;
       final path = isEdit ? '/products/${widget.product!.id}/' : '/products/';
 
-      final fields = <String, String>{
-        'name': _nameCtrl.text.trim(),
-        'category': _selectedCategoryId.toString(),
-        'price': _priceCtrl.text.trim(),
-        'original_price': _originalPriceCtrl.text.trim().isNotEmpty
-            ? _originalPriceCtrl.text.trim()
-            : '',
-        'description': _descCtrl.text.trim(),
-        'stock': _stockCtrl.text.trim(),
-        'is_active': _isActive.toString(),
-      };
+        final fields = <String, String>{
+          'name': _nameCtrl.text.trim(),
+          'category': _selectedCategoryId.toString(),
+          'price': _priceCtrl.text.trim(),
+          'description': _descCtrl.text.trim(),
+          'stock': _stockCtrl.text.trim(),
+          'is_active': _isActive.toString(),
+        };
+        if (_originalPriceCtrl.text.trim().isNotEmpty) {
+          fields['original_price'] = _originalPriceCtrl.text.trim();
+        }
 
       if (isEdit && _newImageFiles.isEmpty) {
         // Simple PUT for updates without new images
@@ -918,7 +971,7 @@ class _ProductFormScreenState extends State<_ProductFormScreen> {
           backgroundColor: Colors.red,
           colorText: Colors.white);
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -947,7 +1000,8 @@ class _ProductFormScreenState extends State<_ProductFormScreen> {
                 children: [
                   ..._existingImageUrls.asMap().entries.map(
                     (e) => _ImageThumb(
-                      child: Image.network(e.value, fit: BoxFit.cover),
+                      child: Image.network(e.value, fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported, color: Color(0xFFCCCCCC))),
                       onRemove: () => setState(() => _existingImageUrls.removeAt(e.key)),
                     ),
                   ),
@@ -1049,11 +1103,13 @@ class _ProductFormScreenState extends State<_ProductFormScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _Field(controller: _priceCtrl, label: 'Harga (Rp)',
+                  child: _Field(controller: _priceCtrl, label: 'Harga (\$)',
                       keyboardType: TextInputType.number,
                       validator: (v) {
                         if (v!.isEmpty) return 'Hatama harga';
-                        if (double.tryParse(v) == null) return 'Numeru deit';
+                        final n = double.tryParse(v);
+                        if (n == null) return 'Numeru deit';
+                        if (n < 0) return 'Harga labele negativu';
                         return null;
                       }),
                 ),
@@ -1073,7 +1129,9 @@ class _ProductFormScreenState extends State<_ProductFormScreen> {
                 keyboardType: TextInputType.number,
                 validator: (v) {
                   if (v!.isEmpty) return 'Hatama stok';
-                  if (int.tryParse(v) == null) return 'Numeru deit';
+                  final n = int.tryParse(v);
+                  if (n == null) return 'Numeru deit';
+                  if (n < 0) return 'Stok labele negativu';
                   return null;
                 }),
             const SizedBox(height: 12),

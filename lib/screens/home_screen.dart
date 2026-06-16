@@ -17,15 +17,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final CartController _cartController = Get.find();
   final AuthController _authController = Get.find();
 
-  int _currentBanner = 0;
-  final PageController _bannerController = PageController();
-
-  @override
-  void dispose() {
-    _bannerController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SliverToBoxAdapter(child: _buildSearchBar()),
             SliverToBoxAdapter(child: _buildBannerSlider()),
             SliverToBoxAdapter(
-              child: _buildSectionHeader('Kategoria', onTap: () {}),
+              child: _buildSectionHeader('Kategoria', onTap: () => Get.toNamed('/shop')),
             ),
             SliverToBoxAdapter(child: _buildCategories()),
             SliverToBoxAdapter(
@@ -60,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 );
               }
-              final products = _productController.newProducts;
+              final products = _productController.homeFilteredNewProducts;
               if (products.isEmpty) {
                 return const SliverToBoxAdapter(
                   child: Center(
@@ -199,58 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBannerSlider() {
-    final banners = [
-      _BannerData(
-        'DESKONTU 30% OFF',
-        'Koleksaun\nEstasaun Foun',
-        'Hola Agora →',
-        [const Color(0xFF1A1A1A), const Color(0xFF3D3D3D)],
-      ),
-      _BannerData('ARRIVALS FOUN', 'Dress &\nKemeja Premium', 'Haree Agora →', [
-        const Color(0xFF2C3E50),
-        const Color(0xFF4A6741),
-      ]),
-      _BannerData('FLASH SALE', 'Jaket\nOversized Trendy', 'Sosa Agora →', [
-        const Color(0xFF8B1A1A),
-        const Color(0xFFCC4444),
-      ]),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Column(
-        children: [
-          SizedBox(
-            height: 165,
-            child: PageView.builder(
-              controller: _bannerController,
-              onPageChanged: (i) => setState(() => _currentBanner = i),
-              itemCount: banners.length,
-              itemBuilder: (_, i) => _BannerCard(data: banners[i]),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              banners.length,
-              (i) => AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: _currentBanner == i ? 20 : 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: _currentBanner == i
-                      ? const Color(0xFF1A1A1A)
-                      : const Color(0xFFCCCCCC),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildSectionHeader(String title, {required VoidCallback onTap}) {
@@ -293,106 +233,6 @@ class _HomeScreenState extends State<HomeScreen> {
         }).toList(),
       ),
     ));
-  }
-}
-
-// ── Banner helpers ────────────────────────────────────────────────
-class _BannerData {
-  final String tag, title, cta;
-  final List<Color> gradient;
-  _BannerData(this.tag, this.title, this.cta, this.gradient);
-}
-
-class _BannerCard extends StatelessWidget {
-  final _BannerData data;
-  const _BannerCard({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: data.gradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE53935),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    data.tag,
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  data.title,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    data.cta,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: 90,
-            height: 110,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.shopping_bag,
-              size: 55,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -617,6 +457,22 @@ class _ProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                if (product.stock > 0 && product.stock <= 5)
+                  Positioned(
+                    bottom: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'Stok: ${product.stock}',
+                        style: const TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -652,7 +508,7 @@ class _ProductCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '\$ ${_fmt(product.price)}',
+                          _fmt(product.price),
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -661,7 +517,7 @@ class _ProductCard extends StatelessWidget {
                         ),
                         if (product.hasDiscount)
                           Text(
-                            '\$ ${_fmt(product.originalPrice!)}',
+                            _fmt(product.originalPrice!),
                             style: const TextStyle(
                               fontSize: 10,
                               color: Color(0xFFAAAAAA),
@@ -696,8 +552,12 @@ class _ProductCard extends StatelessWidget {
     );
   }
 
-  String _fmt(double price) => price.toInt().toString().replaceAllMapped(
-    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-    (m) => '${m[1]}.',
-  );
+  String _fmt(double price) {
+    final intPart = price.toInt();
+    final formatted = intPart.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    );
+    return '\$$formatted';
+  }
 }

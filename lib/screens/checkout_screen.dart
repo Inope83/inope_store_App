@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../controllers/auth_controller.dart';
 import '../controllers/cart_controller.dart';
 import '../controllers/order_controller.dart';
+import '../controllers/product_controller.dart';
 import '../widgets/custom_button.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -14,6 +16,7 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final CartController cartController = Get.find();
   final OrderController orderController = Get.find();
+  final AuthController authController = Get.find();
 
   final TextEditingController addressController = TextEditingController();
   String selectedPaymentMethod = 'cod';
@@ -21,22 +24,35 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   final double shippingFee = 15000.0;
 
-  String _fmt(double price) => price.toInt().toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-        (m) => '${m[1]}.',
-      );
+  String _fmt(double price) {
+    final intPart = price.toInt();
+    final formatted = intPart.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    );
+    return '\$$formatted';
+  }
 
   Future<void> _handlePlaceOrder() async {
-    final address = addressController.text.trim();
-    if (address.isEmpty) {
-      Get.snackbar(
-        'Sala',
-        'Favór hatama diresaun entrega nian.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
-      return;
+    String address, phone, email;
+    if (selectedPaymentMethod == 'cod') {
+      address = addressController.text.trim();
+      phone = authController.currentUser.value?.phone ?? '';
+      email = authController.currentUser.value?.email ?? '';
+      if (address.isEmpty) {
+        Get.snackbar(
+          'Sala',
+          'Favór hatama diresaun entrega nian.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return;
+      }
+    } else {
+      address = '';
+      phone = '';
+      email = '';
     }
 
     setState(() => isCreatingOrder = true);
@@ -45,8 +61,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ? 'Selu iha fatin (COD)'
         : 'Transferénsia Bankária';
 
+    // Re-validate stock before placing order
+    final productController = Get.find<ProductController>();
+    for (final item in cartController.items) {
+      final product = productController.getProductById(item.productId);
+      if (product == null) {
+        Get.snackbar('Sala', "Produtu '${item.productName}' la iha",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white);
+        setState(() => isCreatingOrder = false);
+        return;
+      }
+      if (product.stock < item.quantity) {
+        Get.snackbar('Stock La To\'o',
+            "'${item.productName}' stock disponivel: ${product.stock}",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.orange,
+            colorText: Colors.white);
+        setState(() => isCreatingOrder = false);
+        return;
+      }
+    }
+
     final success = await orderController.createOrder(
       address: address,
+      phone: phone,
+      email: email,
       paymentMethod: paymentLabel,
     );
 
@@ -103,107 +144,66 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSectionTitle('Diresaun Entrega'),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on_outlined,
-                            color: Color(0xFF1A1A1A)),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Hatama Diresaun Kompletu',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: addressController,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        hintText:
-                            'Naran dalan, suku, postu, munisípiu, no pontu referénsia...',
-                        hintStyle: TextStyle(
-                          color: Colors.grey.shade400,
-                          fontSize: 13,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: Color(0xFFE0E0E0)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                              color: Color(0xFF1A1A1A), width: 1.5),
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFFAFAFA),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
               const SizedBox(height: 20),
 
               _buildSectionTitle('Métodu Pagamentu'),
               const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+              _buildCodOption(),
+              if (selectedPaymentMethod == 'cod') ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE8E8E8)),
+                  ),
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: addressController,
+                        maxLines: 2,
+                        decoration: InputDecoration(
+                          hintText: 'Naran dalan, suku, postu, munisípiu...',
+                          hintStyle: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontSize: 13,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide:
+                                const BorderSide(color: Color(0xFFE0E0E0)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                                color: Color(0xFF1A1A1A), width: 1.5),
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFFAFAFA),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildInfoField(
+                        icon: Icons.phone_outlined,
+                        value: authController.currentUser.value?.phone ?? '',
+                        hint: 'Telefone',
+                      ),
+                      const SizedBox(height: 12),
+                      _buildInfoField(
+                        icon: Icons.email_outlined,
+                        value: authController.currentUser.value?.email ?? '',
+                        hint: 'Email',
+                      ),
+                    ],
+                  ),
                 ),
-                child: Column(
-                  children: [
-                    _buildPaymentOption(
-                      id: 'cod',
-                      title: 'Selu iha fatin (COD)',
-                      subtitle: 'Sosa-na`in selu bainhira produtu to`o',
-                      icon: Icons.payments_outlined,
-                    ),
-                    const Divider(height: 1, indent: 56),
-                    _buildPaymentOption(
-                      id: 'bank',
-                      title: 'Transferénsia Bankária',
-                      subtitle: 'BNU, Telemor, DST, T-Pay',
-                      icon: Icons.account_balance_outlined,
-                    ),
-                  ],
-                ),
-              ),
+              ],
+              const SizedBox(height: 10),
+              _buildBankOption(),
 
               const SizedBox(height: 20),
 
@@ -267,7 +267,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${item.quantity} x \$ ${_fmt(item.price)}',
+                                '${item.quantity} x ${_fmt(item.price)}',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Color(0xFF888888),
@@ -278,7 +278,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '\$ ${_fmt(item.subtotal)}',
+                          _fmt(item.subtotal),
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -311,9 +311,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 child: Column(
                   children: [
                     _buildPriceRow(
-                        'Subtotal', '\$ ${_fmt(cartController.totalPrice.value)}'),
+                        'Subtotal', _fmt(cartController.totalPrice.value)),
                     const SizedBox(height: 10),
-                    _buildPriceRow('Porte (Frete)', '\$ ${_fmt(shippingFee)}'),
+                    _buildPriceRow('Porte (Frete)', _fmt(shippingFee)),
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 12),
                       child: Divider(height: 1),
@@ -330,7 +330,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         ),
                         Text(
-                          '\$ ${_fmt(totalPayable)}',
+                          _fmt(totalPayable),
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -372,60 +372,231 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _buildPaymentOption({
-    required String id,
-    required String title,
-    required String subtitle,
-    required IconData icon,
-  }) {
-    final bool isSelected = selectedPaymentMethod == id;
+  Widget _buildCodOption() {
+    final bool isSelected = selectedPaymentMethod == 'cod';
     return GestureDetector(
-      onTap: () => setState(() => selectedPaymentMethod = id),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        color: Colors.transparent,
+      onTap: () => setState(() => selectedPaymentMethod = 'cod'),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF1A1A1A) : const Color(0xFFE8E8E8),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? const Color(0xFF1A1A1A).withValues(alpha: 0.06)
+                  : Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 52,
+              height: 52,
               decoration: BoxDecoration(
-                color: const Color(0xFFF9F9F9),
-                borderRadius: BorderRadius.circular(10),
+                color: isSelected ? const Color(0xFF1A1A1A) : const Color(0xFFF4F4F4),
+                borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(icon, color: const Color(0xFF1A1A1A), size: 20),
+              child: Icon(
+                Icons.handshake_outlined,
+                color: isSelected ? Colors.white : const Color(0xFF666666),
+                size: 24,
+              ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 13,
+                    'Selu iha fatin (COD)',
+                    style: TextStyle(
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A1A1A),
+                      color: isSelected ? const Color(0xFF1A1A1A) : const Color(0xFF444444),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF888888),
-                    ),
+                  const SizedBox(height: 3),
+                  const Text(
+                    'Sosa-na\'in selu bainhira produtu to\'o',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF999999)),
                   ),
                 ],
               ),
             ),
-            Icon(
-              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: isSelected ? const Color(0xFF1A1A1A) : Colors.grey.shade400,
-              size: 20,
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? const Color(0xFF1A1A1A) : const Color(0xFFCCCCCC),
+                  width: isSelected ? 2 : 1.5,
+                ),
+                color: isSelected ? const Color(0xFF1A1A1A) : Colors.transparent,
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check, color: Colors.white, size: 14)
+                  : null,
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildBankOption() {
+    final bool isSelected = selectedPaymentMethod == 'bank';
+    final banks = ['BNU', 'Telemor', 'DST', 'T-Pay'];
+    return GestureDetector(
+      onTap: () => setState(() => selectedPaymentMethod = 'bank'),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.fromLTRB(16, 16, 16, isSelected ? 4 : 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF1A1A1A) : const Color(0xFFE8E8E8),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? const Color(0xFF1A1A1A).withValues(alpha: 0.06)
+                  : Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFF1A1A1A) : const Color(0xFFF4F4F4),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    Icons.account_balance_outlined,
+                    color: isSelected ? Colors.white : const Color(0xFF666666),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Transferénsia Bankária',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isSelected ? const Color(0xFF1A1A1A) : const Color(0xFF444444),
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      const Text(
+                        'Rede bancária no digital',
+                        style: TextStyle(fontSize: 12, color: Color(0xFF999999)),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? const Color(0xFF1A1A1A) : const Color(0xFFCCCCCC),
+                      width: isSelected ? 2 : 1.5,
+                    ),
+                    color: isSelected ? const Color(0xFF1A1A1A) : Colors.transparent,
+                  ),
+                  child: isSelected
+                      ? const Icon(Icons.check, color: Colors.white, size: 14)
+                      : null,
+                ),
+              ],
+            ),
+            if (isSelected) ...[
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9F9F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Hili banku transfere nian',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF666666),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: banks.map((bank) => _buildBankChip(bank)).toList(),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBankChip(String name) {
+    final icons = {
+      'BNU': Icons.account_balance,
+      'Telemor': Icons.phone_android,
+      'DST': Icons.phone_iphone,
+      'T-Pay': Icons.wallet,
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icons[name] ?? Icons.business, size: 16, color: const Color(0xFF444444)),
+          const SizedBox(width: 6),
+          Text(
+            name,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF444444),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -452,4 +623,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ],
     );
   }
+
+  Widget _buildInfoField({
+    required IconData icon,
+    required String value,
+    required String hint,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F4F4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: const Color(0xFF888888)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              value.isNotEmpty ? value : hint,
+              style: TextStyle(
+                fontSize: 14,
+                color: value.isNotEmpty
+                    ? const Color(0xFF1A1A1A)
+                    : const Color(0xFFBBBBBB),
+              ),
+            ),
+          ),
+          const Icon(Icons.check_circle,
+              size: 16, color: Color(0xFF4CAF50)),
+        ],
+      ),
+    );
+  }
 }
+
