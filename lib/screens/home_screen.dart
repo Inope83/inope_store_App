@@ -668,6 +668,16 @@ class _ProductCard extends StatelessWidget {
                               decoration: TextDecoration.lineThrough,
                             ),
                           ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Stok: ${product.stock}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: product.stock <= 5
+                                ? const Color(0xFFE53935)
+                                : const Color(0xFF888888),
+                          ),
+                        ),
                       ],
                     ),
                     GestureDetector(

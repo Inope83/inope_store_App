@@ -94,7 +94,11 @@ class LoginScreen extends StatelessWidget {
                         password: passwordController.text,
                       );
                       if (success) {
-                        Get.offAllNamed('/home');
+                        if (_authController.isAdmin) {
+                          Get.offAllNamed('/admin');
+                        } else {
+                          Get.offAllNamed('/home');
+                        }
                       } else {
                         Get.snackbar('Sala', _authController.errorMessage.value,
                             snackPosition: SnackPosition.BOTTOM,
