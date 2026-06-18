@@ -13,6 +13,7 @@ import 'screens/shop_screen.dart';
 import 'screens/cart_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/checkout_screen.dart';
+import 'screens/product_detail_screen.dart';
 import 'screens/admin/admin_screen.dart';
 
 void main() async {
@@ -48,6 +49,7 @@ class InopeStore extends StatelessWidget {
         GetPage(name: '/shop', page: () => const ShopScreen()),
         GetPage(name: '/cart', page: () => const CartScreen()),
         GetPage(name: '/checkout', page: () => const CheckoutScreen()),
+        GetPage(name: '/product-detail', page: () => const ProductDetailScreen()),
         GetPage(name: '/admin', page: () {
           final auth = Get.find<AuthController>();
           if (!auth.isAdmin) return const _NotAdminScreen();

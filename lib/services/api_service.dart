@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -14,7 +15,7 @@ class ApiService {
 
     if (defaultTargetPlatform == TargetPlatform.android) {
       // 10.0.2.2 is for emulator; use your computer's LAN IP for physical phone.
-      return 'http://172.19.190.209:8000/api';
+      return 'http://192.168.1.21:8000/api';
     }
 
     // For iOS simulator, macOS, Linux, Windows
@@ -148,16 +149,27 @@ class ApiService {
 
   Future<http.Response> uploadFiles(
     String path,
-    List<http.MultipartFile> files, {
+    List<Uint8List> fileBytes, {
+    List<String>? fileNames,
     Map<String, String>? fields,
     String method = 'POST',
   }) async {
     final uri = Uri.parse('$baseUrl$path');
+
+    List<http.MultipartFile> buildFiles() {
+      return fileBytes.asMap().entries.map((e) {
+        final name = fileNames != null && e.key < fileNames.length
+            ? fileNames[e.key]
+            : 'file';
+        return http.MultipartFile.fromBytes('images', e.value, filename: name);
+      }).toList();
+    }
+
     var req = http.MultipartRequest(method, uri);
     if (_accessToken != null) {
       req.headers['Authorization'] = 'Bearer $_accessToken';
     }
-    req.files.addAll(files);
+    req.files.addAll(buildFiles());
     if (fields != null) req.fields.addAll(fields);
     var streamed = await req.send();
     var res = await http.Response.fromStream(streamed);
@@ -166,7 +178,7 @@ class ApiService {
       if (_accessToken != null) {
         req.headers['Authorization'] = 'Bearer $_accessToken';
       }
-      req.files.addAll(files);
+      req.files.addAll(buildFiles());
       if (fields != null) req.fields.addAll(fields);
       streamed = await req.send();
       res = await http.Response.fromStream(streamed);

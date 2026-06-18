@@ -5,6 +5,7 @@ import '../models/order.dart';
 import '../services/api_service.dart';
 import 'auth_controller.dart';
 import 'cart_controller.dart';
+import 'product_controller.dart';
 
 class OrderController extends GetxController {
   final ApiService _api = ApiService();
@@ -58,6 +59,7 @@ class OrderController extends GetxController {
       });
       if (res.statusCode == 201) {
         await Get.find<CartController>().clearCart();
+        await Get.find<ProductController>().fetchProducts();
         await fetchOrders();
         Get.snackbar('Suksesu', 'Orde halo ho suksesu');
         return true;

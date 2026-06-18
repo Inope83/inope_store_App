@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
 import '../../controllers/auth_controller.dart';
 import '../../controllers/admin_controller.dart';
 import '../../controllers/product_controller.dart';
@@ -59,6 +58,7 @@ class _AdminScreenState extends State<AdminScreen> {
           final res = await api.delete('/products/${product.id}/');
           if (res.statusCode == 204) {
             await controller.fetchProductsForAdmin();
+            await Get.find<ProductController>().fetchProducts();
             await Get.find<AdminController>().refreshAll();
             Get.snackbar('Suksesu', '${product.name} hamos ona',
                 snackPosition: SnackPosition.BOTTOM,
@@ -932,18 +932,17 @@ class _ProductFormScreenState extends State<_ProductFormScreen> {
         }
       } else {
         // Upload with multipart for new products OR updates with new images
-        final files = <http.MultipartFile>[];
+        final fileBytes = <Uint8List>[];
+        final fileNames = <String>[];
         for (final file in _newImageFiles) {
           final bytes = await file.readAsBytes();
-          files.add(http.MultipartFile.fromBytes(
-            'images',
-            bytes,
-            filename: file.name,
-          ));
+          fileBytes.add(bytes);
+          fileNames.add(file.name);
         }
         final res = await api.uploadFiles(
           path, 
-          files, 
+          fileBytes,
+          fileNames: fileNames,
           fields: fields,
           method: isEdit ? 'PUT' : 'POST',
         );

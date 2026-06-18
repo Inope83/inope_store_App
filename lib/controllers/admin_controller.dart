@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../services/api_service.dart';
@@ -19,11 +20,6 @@ class AdminController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString orderFilter = 'all'.obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-    refreshAll();
-  }
 
   Future<void> refreshAll() async {
     isLoading.value = true;
