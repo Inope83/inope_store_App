@@ -23,6 +23,7 @@ urlpatterns = [
     # Admin
     path('admin/orders/', views.admin_order_list, name='admin-order-list'),
     path('admin/orders/<int:order_id>/status/', views.admin_order_update_status, name='admin-order-status'),
+    path('admin/orders/<int:order_id>/delete/', views.admin_order_delete, name='admin-order-delete'),
     path('admin/stats/', views.admin_stats, name='admin-stats'),
     path('admin/users/', views.admin_users, name='admin-users'),
 

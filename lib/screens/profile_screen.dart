@@ -62,8 +62,12 @@ class ProfileScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
+        child: RefreshIndicator(
+          onRefresh: () => orderController.fetchOrders(),
+          color: const Color(0xFF1A1A1A),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
             SliverToBoxAdapter(
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 24),
@@ -301,12 +305,56 @@ class ProfileScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            '${items.length} item • $dateStr',
-                            style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF888888)),
-                          ),
+                          ...items.take(2).map((item) {
+                            final name = item is Map
+                                ? (item['product_name'] ?? '')
+                                : '';
+                            final image = item is Map
+                                ? (item['product_image'] ?? '')
+                                : '';
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Row(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Container(
+                                      width: 40,
+                                      height: 40,
+                                      color: const Color(0xFFF0F0F0),
+                                      child: image.isNotEmpty
+                                          ? Image.network(image,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) =>
+                                                  const Icon(Icons.shopping_bag,
+                                                      size: 18,
+                                                      color: Color(0xFFCCCCCC)))
+                                          : const Icon(Icons.shopping_bag,
+                                              size: 18,
+                                              color: Color(0xFFCCCCCC)),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      name,
+                                      style: const TextStyle(
+                                          fontSize: 13,
+                                          color: Color(0xFF444444)),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                          if (items.length > 2)
+                            Text(
+                              '+ ${items.length - 2} seluk tan',
+                              style: const TextStyle(
+                                  fontSize: 12, color: Color(0xFFBBBBBB)),
+                            ),
                           const Divider(height: 16),
                           Row(
                             mainAxisAlignment:
@@ -420,6 +468,7 @@ class ProfileScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

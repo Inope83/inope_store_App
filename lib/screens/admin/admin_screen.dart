@@ -87,6 +87,10 @@ class _AdminScreenState extends State<AdminScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => Get.back(),
+        ),
         title: Text(_titles[_tabIndex],
             style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF1A1A1A),
@@ -535,6 +539,26 @@ class _OrderCard extends StatelessWidget {
                   label: const Text('Pending'),
                   style: TextButton.styleFrom(foregroundColor: const Color(0xFF888888)),
                 ),
+              if (status == 'finished')
+                TextButton.icon(
+                  onPressed: () {
+                    Get.defaultDialog(
+                      title: 'Hamos Orden',
+                      middleText: 'Ita boot hakarak hamos orden ORD-$orderId?',
+                      textConfirm: 'Hamos',
+                      textCancel: 'Lae',
+                      confirmTextColor: Colors.white,
+                      buttonColor: Colors.red,
+                      onConfirm: () {
+                        Get.back();
+                        admin.deleteOrder(orderId);
+                      },
+                    );
+                  },
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  label: const Text('Hamos'),
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                ),
             ],
           ),
           if ((order['address'] as String?)?.isNotEmpty == true)
@@ -980,6 +1004,10 @@ class _ProductFormScreenState extends State<_ProductFormScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => Get.back(),
+        ),
         title: Text(isEdit ? 'Edita Produtu' : 'Produtu Foun',
             style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF1A1A1A),
