@@ -15,7 +15,7 @@ class ApiService {
 
     if (defaultTargetPlatform == TargetPlatform.android) {
       // 10.0.2.2 is for emulator; use your computer's LAN IP for physical phone.
-      return 'http://192.168.1.21:8000/api';
+      return 'http://192.168.1.189:8000/api';
     }
 
     // For iOS simulator, macOS, Linux, Windows
