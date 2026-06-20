@@ -19,10 +19,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final AuthController authController = Get.find();
 
   final TextEditingController addressController = TextEditingController();
+  final TextEditingController bankAccountController = TextEditingController();
+  final TextEditingController bankAddressController = TextEditingController();
   String selectedPaymentMethod = 'cod';
+  String? selectedBank;
   bool isCreatingOrder = false;
-
-  final double shippingFee = 15000.0;
 
   String _fmt(double price) {
     final intPart = price.toInt();
@@ -50,7 +51,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         return;
       }
     } else {
-      address = '';
+      final bankAccount = bankAccountController.text.trim();
+      final bankAddr = bankAddressController.text.trim();
+      if (selectedBank == null) {
+        Get.snackbar('Sala', 'Favór hili banku transfere nian.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.orange,
+            colorText: Colors.white);
+        return;
+      }
+      if (bankAccount.isEmpty) {
+        Get.snackbar('Sala', 'Favór hatama númeru konta banku.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.orange,
+            colorText: Colors.white);
+        return;
+      }
+      address = bankAddr;
       phone = '';
       email = '';
     }
@@ -59,7 +76,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     final paymentLabel = selectedPaymentMethod == 'cod'
         ? 'Selu iha fatin (COD)'
-        : 'Transferénsia Bankária';
+        : 'Transferénsia Bankária - $selectedBank (${bankAccountController.text.trim()})';
 
     // Re-validate stock before placing order
     final productController = Get.find<ProductController>();
@@ -112,12 +129,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void dispose() {
     addressController.dispose();
+    bankAccountController.dispose();
+    bankAddressController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final double totalPayable = cartController.totalPrice.value + shippingFee;
+    final double totalPayable = cartController.totalPrice.value;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -312,8 +331,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   children: [
                     _buildPriceRow(
                         'Subtotal', _fmt(cartController.totalPrice.value)),
-                    const SizedBox(height: 10),
-                    _buildPriceRow('Porte (Frete)', _fmt(shippingFee)),
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 12),
                       child: Divider(height: 1),
@@ -455,9 +472,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _buildBankOption() {
     final bool isSelected = selectedPaymentMethod == 'bank';
-    final banks = ['BNU', 'Telemor', 'DST', 'T-Pay'];
+    final banks = ['BNU', 'Telemor', 'BNCTL'];
     return GestureDetector(
-      onTap: () => setState(() => selectedPaymentMethod = 'bank'),
+      onTap: () => setState(() {
+        selectedPaymentMethod = 'bank';
+        selectedBank = null;
+      }),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.fromLTRB(16, 16, 16, isSelected ? 4 : 16),
@@ -558,6 +578,48 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       runSpacing: 8,
                       children: banks.map((bank) => _buildBankChip(bank)).toList(),
                     ),
+                    if (selectedBank != null) ...[
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: bankAccountController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          hintText: 'Númeru konta banku',
+                          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFF1A1A1A), width: 1.5),
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFFAFAFA),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: bankAddressController,
+                        maxLines: 2,
+                        decoration: InputDecoration(
+                          hintText: 'Diresaun banku (opsional)',
+                          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFF1A1A1A), width: 1.5),
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFFAFAFA),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -573,30 +635,45 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final icons = {
       'BNU': Icons.account_balance,
       'Telemor': Icons.phone_android,
-      'DST': Icons.phone_iphone,
-      'T-Pay': Icons.wallet,
+      'BNCTL': Icons.business,
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icons[name] ?? Icons.business, size: 16, color: const Color(0xFF444444)),
-          const SizedBox(width: 6),
-          Text(
-            name,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF444444),
-            ),
+    final isActive = selectedBank == name;
+    return GestureDetector(
+      onTap: () => setState(() {
+        selectedBank = name;
+        bankAccountController.clear();
+        bankAddressController.clear();
+      }),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF1A1A1A) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isActive ? const Color(0xFF1A1A1A) : const Color(0xFFE0E0E0),
+            width: isActive ? 1.5 : 1,
           ),
-        ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icons[name] ?? Icons.business,
+              size: 16,
+              color: isActive ? Colors.white : const Color(0xFF444444),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              name,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isActive ? Colors.white : const Color(0xFF444444),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

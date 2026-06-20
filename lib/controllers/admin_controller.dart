@@ -193,4 +193,27 @@ class AdminController extends GetxController {
           colorText: Colors.white);
     }
   }
+
+  Future<void> deleteOrder(String orderId) async {
+    try {
+      final res = await _api.delete('/admin/orders/$orderId/delete/');
+      if (res.statusCode == 204) {
+        await Future.wait([fetchAllOrders(), _loadStats()]);
+        Get.snackbar('Suksesu', 'Orden hamos ona',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white);
+      } else {
+        Get.snackbar('Error', 'La konsege hamos orden: Status ${res.statusCode}',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white);
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'La konsege hamos orden: $e',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
+    }
+  }
 }

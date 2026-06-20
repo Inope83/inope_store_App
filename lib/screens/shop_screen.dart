@@ -22,17 +22,26 @@ class ShopScreen extends StatelessWidget {
             _buildCategoryFilter(productController),
             const SizedBox(height: 12),
             Expanded(
-              child: Obx(() {
-                if (productController.isLoading.value) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF1A1A1A)),
-                  );
-                }
-                final products = productController.filteredProducts;
-                if (products.isEmpty) {
-                  return _emptyState;
-                }
-                return GridView.builder(
+              child: RefreshIndicator(
+                onRefresh: () => productController.fetchProducts(),
+                color: const Color(0xFF1A1A1A),
+                child: Obx(() {
+                  if (productController.isLoading.value) {
+                    return const SingleChildScrollView(
+                      physics: AlwaysScrollableScrollPhysics(),
+                      child: Center(
+                        child: CircularProgressIndicator(color: Color(0xFF1A1A1A)),
+                      ),
+                    );
+                  }
+                  final products = productController.filteredProducts;
+                  if (products.isEmpty) {
+                    return SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: _emptyState,
+                    );
+                  }
+                  return GridView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
@@ -53,6 +62,7 @@ class ShopScreen extends StatelessWidget {
                 );
               }),
             ),
+          ),
           ],
         ),
       ),
