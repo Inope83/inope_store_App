@@ -15,11 +15,7 @@ class ApiService {
 
     if (defaultTargetPlatform == TargetPlatform.android) {
       // 10.0.2.2 is for emulator; use your computer's LAN IP for physical phone.
-<<<<<<< HEAD
       return 'http://192.168.1.189:8000/api';
-=======
-      return 'http://172.19.190.209:8000/api';
->>>>>>> features/stock
     }
 
     // For iOS simulator, macOS, Linux, Windows
@@ -160,11 +156,7 @@ class ApiService {
   }) async {
     final uri = Uri.parse('$baseUrl$path');
 
-<<<<<<< HEAD
     List<http.MultipartFile> buildFiles() {
-=======
-    List<http.MultipartFile> _buildFiles() {
->>>>>>> features/stock
       return fileBytes.asMap().entries.map((e) {
         final name = fileNames != null && e.key < fileNames.length
             ? fileNames[e.key]
@@ -177,11 +169,7 @@ class ApiService {
     if (_accessToken != null) {
       req.headers['Authorization'] = 'Bearer $_accessToken';
     }
-<<<<<<< HEAD
     req.files.addAll(buildFiles());
-=======
-    req.files.addAll(_buildFiles());
->>>>>>> features/stock
     if (fields != null) req.fields.addAll(fields);
     var streamed = await req.send();
     var res = await http.Response.fromStream(streamed);
@@ -190,11 +178,7 @@ class ApiService {
       if (_accessToken != null) {
         req.headers['Authorization'] = 'Bearer $_accessToken';
       }
-<<<<<<< HEAD
       req.files.addAll(buildFiles());
-=======
-      req.files.addAll(_buildFiles());
->>>>>>> features/stock
       if (fields != null) req.fields.addAll(fields);
       streamed = await req.send();
       res = await http.Response.fromStream(streamed);
