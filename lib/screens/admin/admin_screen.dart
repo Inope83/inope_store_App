@@ -1070,7 +1070,7 @@ class _ProductFormScreenState extends State<_ProductFormScreen> {
                 );
               }
               return DropdownButtonFormField<int>(
-                initialValue: cats.any((c) => c['id'] == _selectedCategoryId)
+                value: cats.any((c) => c['id'] == _selectedCategoryId)
                     ? _selectedCategoryId
                     : null,
                 items: cats.map((c) {

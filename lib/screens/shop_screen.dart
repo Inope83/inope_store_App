@@ -278,6 +278,7 @@ class _ShopProductCard extends StatelessWidget {
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
+<<<<<<< HEAD
           ],
         ),
         child: Column(
@@ -291,6 +292,56 @@ class _ShopProductCard extends StatelessWidget {
                     decoration: const BoxDecoration(
                       color: Color(0xFFF0F0F0),
                       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+=======
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.category,
+                  style: const TextStyle(fontSize: 10, color: Color(0xFFAAAAAA), fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  product.name,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A1A)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '\$ ${_fmt(product.price)}',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A)),
+                        ),
+                        if (product.hasDiscount)
+                          Text(
+                            '\$ ${_fmt(product.originalPrice!)}',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Color(0xFFAAAAAA),
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Stok: ${product.stock}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: product.stock <= 5
+                                ? const Color(0xFFE53935)
+                                : const Color(0xFF888888),
+                          ),
+                        ),
+                      ],
+>>>>>>> features/stock
                     ),
                     child: product.firstImage.isNotEmpty
                         ? ClipRRect(

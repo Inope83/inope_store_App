@@ -536,31 +536,30 @@ class _ProductCard extends StatelessWidget {
                                   : const Color(0xFF888888),
                             ),
                           ),
-                        ],
-                      ),
-                      GestureDetector(
-                        onTap: product.stock > 0 ? onAddToCart : null,
-                        child: Container(
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            color: product.stock > 0 ? const Color(0xFF1A1A1A) : Colors.grey.shade300,
-                            borderRadius: BorderRadius.circular(9),
-                          ),
-                          child: Icon(
-                            product.stock > 0 ? Icons.add : Icons.block,
-                            color: Colors.white,
-                            size: 16,
-                          ),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: product.stock > 0 ? onAddToCart : null,
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: product.stock > 0 ? const Color(0xFF1A1A1A) : Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: Icon(
+                          product.stock > 0 ? Icons.add : Icons.block,
+                          color: Colors.white,
+                          size: 16,
                         ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
