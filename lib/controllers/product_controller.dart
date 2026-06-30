@@ -22,15 +22,34 @@ class ProductController extends GetxController {
     fetchCategories();
   }
 
+  Future<List<dynamic>> _fetchAllPages(String path) async {
+    final List<dynamic> allResults = [];
+    String? nextUrl;
+    final res = await _api.get(path);
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+      final List<dynamic> results = data is Map ? (data['results'] ?? []) : data;
+      allResults.addAll(results);
+      nextUrl = data is Map ? data['next'] as String? : null;
+    }
+    while (nextUrl != null) {
+      final nextRes = await _api.get(nextUrl.replaceFirst(ApiService.baseUrl, ''));
+      if (nextRes.statusCode == 200) {
+        final data = jsonDecode(nextRes.body);
+        allResults.addAll(data['results'] ?? []);
+        nextUrl = data['next'] as String?;
+      } else {
+        break;
+      }
+    }
+    return allResults;
+  }
+
   Future<void> fetchCategories() async {
     try {
-      final res = await _api.get('/categories/');
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        final List<dynamic> results = data is Map ? (data['results'] ?? []) : data;
-        final names = results.map((c) => c['name'] as String).toList();
-        categories.value = ['Hotu', ...names];
-      }
+      final cats = await _fetchAllPages('/categories/');
+      final names = cats.map((c) => c['name'] as String).toList();
+      categories.value = ['Hotu', ...names];
     } catch (e) {
       debugPrint('Error fetching categories: $e');
     }
@@ -39,13 +58,9 @@ class ProductController extends GetxController {
   Future<void> fetchProducts() async {
     isLoading.value = true;
     try {
-      final res = await _api.get('/products/');
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        final List<dynamic> results = data is Map ? (data['results'] ?? []) : data;
-        allProducts.value = results.map((e) => ProductModel.fromJson(e)).toList();
-        _refreshDerivedLists();
-      }
+      final results = await _fetchAllPages('/products/');
+      allProducts.value = results.map((e) => ProductModel.fromJson(e)).toList();
+      _refreshDerivedLists();
     } catch (e) {
       debugPrint('Error fetching products: $e');
     } finally {
@@ -55,12 +70,8 @@ class ProductController extends GetxController {
 
   Future<void> fetchProductsForAdmin() async {
     try {
-      final res = await _api.get('/products/?admin=true');
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        final List<dynamic> results = data is Map ? (data['results'] ?? []) : data;
-        adminProducts.value = results.map((e) => ProductModel.fromJson(e)).toList();
-      }
+      final results = await _fetchAllPages('/products/?admin=true');
+      adminProducts.value = results.map((e) => ProductModel.fromJson(e)).toList();
     } catch (e) {
       debugPrint('Error fetching products for admin: $e');
     }
@@ -70,7 +81,8 @@ class ProductController extends GetxController {
     featuredProducts.value = allProducts.where((p) => p.hasDiscount).toList();
     final sorted = List<ProductModel>.from(allProducts)
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    newProducts.value = sorted;
+    final cutoff = DateTime.now().subtract(const Duration(days: 30));
+    newProducts.value = sorted.where((p) => p.createdAt.isAfter(cutoff)).toList();
   }
 
   List<ProductModel> get filteredProducts {

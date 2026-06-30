@@ -70,9 +70,9 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         fields = ['name', 'phone']
 
     def update(self, instance, validated_data):
-        user_data = validated_data.pop('user', {})
-        if 'first_name' in user_data:
-            instance.user.first_name = user_data['first_name']
+        name = validated_data.pop('name', None)
+        if name:
+            instance.user.first_name = name
             instance.user.save()
         if 'phone' in validated_data:
             instance.phone = validated_data['phone']

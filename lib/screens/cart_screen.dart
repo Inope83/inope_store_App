@@ -3,21 +3,20 @@ import 'package:get/get.dart';
 import '../controllers/cart_controller.dart';
 import '../controllers/product_controller.dart';
 import '../models/cart_model.dart';
+import '../utils/format_utils.dart';
+import '../utils/app_colors.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
 
-  String _fmt(double price) => price.toInt().toString().replaceAllMapped(
-    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-    (m) => '${m[1]}.',
-  );
+  String _fmt(double price) => FormatUtils.formatPrice(price);
 
   @override
   Widget build(BuildContext context) {
     final CartController cartController = Get.find();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -30,7 +29,7 @@ class CartScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const Spacer(),
@@ -44,8 +43,8 @@ class CartScreen extends StatelessWidget {
                                     'Ita boot hakarak hamos item hotu iha karréta?',
                                 textConfirm: 'Hamos',
                                 textCancel: 'Lae',
-                                confirmTextColor: Colors.white,
-                                buttonColor: const Color(0xFFE53935),
+                                confirmTextColor: AppColors.white,
+                                buttonColor: AppColors.red,
                                 onConfirm: () {
                                   cartController.clearCart();
                                   Get.back();
@@ -58,7 +57,7 @@ class CartScreen extends StatelessWidget {
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: AppColors.white,
                                 borderRadius: BorderRadius.circular(10),
                                 boxShadow: [
                                   BoxShadow(
@@ -71,7 +70,7 @@ class CartScreen extends StatelessWidget {
                                 'Hamos',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Color(0xFFE53935),
+                                  color: AppColors.red,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -88,13 +87,13 @@ class CartScreen extends StatelessWidget {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () => cartController.fetchCart(),
-                color: const Color(0xFF1A1A1A),
+                color: AppColors.dark,
                 child: Obx(() {
                   if (cartController.isLoading.value) {
                     return const SingleChildScrollView(
                       physics: AlwaysScrollableScrollPhysics(),
                       child: Center(
-                        child: CircularProgressIndicator(color: Color(0xFF1A1A1A)),
+                        child: CircularProgressIndicator(color: AppColors.dark),
                       ),
                     );
                   }
@@ -116,7 +115,7 @@ class CartScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1A1A1A),
+                                color: AppColors.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -124,7 +123,7 @@ class CartScreen extends StatelessWidget {
                               'Hatama produtu ba karréta ita boot',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFF888888),
+                                color: AppColors.textSecondary,
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -136,13 +135,13 @@ class CartScreen extends StatelessWidget {
                                   vertical: 14,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF1A1A1A),
+                                  color: AppColors.dark,
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                                 child: const Text(
                                   'Buka Shop',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.white,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -179,7 +178,7 @@ class CartScreen extends StatelessWidget {
               return Container(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.white,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(24),
                   ),
@@ -200,7 +199,7 @@ class CartScreen extends StatelessWidget {
                           '${cartController.itemCount} item',
                           style: const TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF888888),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                         Text(
@@ -208,7 +207,7 @@ class CartScreen extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1A1A1A),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ],
@@ -221,14 +220,14 @@ class CartScreen extends StatelessWidget {
                         child: Container(
                           height: 52,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1A1A1A),
+                            color: AppColors.dark,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: const Center(
                             child: Text(
                               'Checkout →',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: AppColors.white,
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -261,14 +260,7 @@ class _CartItemCard extends StatelessWidget {
     required this.onRemove,
   });
 
-  String _fmt(double price) {
-    final intPart = price.toInt();
-    final formatted = intPart.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]}.',
-    );
-    return '\$$formatted';
-  }
+  String _fmt(double price) => FormatUtils.formatPrice(price);
 
   int get _stock {
     final product = Get.find<ProductController>().getProductById(item.productId);
@@ -285,7 +277,7 @@ class _CartItemCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -302,17 +294,17 @@ class _CartItemCard extends StatelessWidget {
               child: Container(
                 width: 72,
                 height: 72,
-                color: const Color(0xFFF0F0F0),
+                color: AppColors.imageBg,
                 child: item.productImage.isNotEmpty
                     ? Image.network(
                         item.productImage,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const Icon(
                           Icons.shopping_bag,
-                          color: Color(0xFFCCCCCC),
+                          color: AppColors.placeholder,
                         ),
                       )
-                    : const Icon(Icons.shopping_bag, color: Color(0xFFCCCCCC)),
+                    : const Icon(Icons.shopping_bag, color: AppColors.placeholder),
               ),
             ),
             const SizedBox(width: 12),
@@ -325,7 +317,7 @@ class _CartItemCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A1A1A),
+                      color: AppColors.textPrimary,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -336,7 +328,7 @@ class _CartItemCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -363,7 +355,7 @@ class _CartItemCard extends StatelessWidget {
                         onTap: onRemove,
                         child: const Icon(
                           Icons.delete_outline,
-                          color: Color(0xFFE53935),
+                          color: AppColors.red,
                           size: 20,
                         ),
                       ),
@@ -398,13 +390,13 @@ class _QtyButton extends StatelessWidget {
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: disabled ? Colors.grey.shade200 : const Color(0xFFF0F0F0),
+          color: disabled ? Colors.grey.shade200 : AppColors.imageBg,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
           icon,
           size: 16,
-          color: disabled ? Colors.grey.shade400 : const Color(0xFF1A1A1A),
+          color: disabled ? Colors.grey.shade400 : AppColors.textPrimary,
         ),
       ),
     );

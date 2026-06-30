@@ -2,32 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/order_controller.dart';
+import '../utils/format_utils.dart';
+import '../utils/app_colors.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  String _fmt(double value) {
-    final intPart = value.toInt();
-    final formatted = intPart.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]}.',
-    );
-    return '\$$formatted';
-  }
+  String _fmt(double value) => FormatUtils.formatPrice(value);
 
   Color _statusColor(String status) {
     switch (status) {
       case 'pending':
-        return const Color(0xFFF59E0B);
+        return AppColors.orange;
       case 'processing':
-        return const Color(0xFF3B82F6);
+        return AppColors.blue;
       case 'finished':
       case 'completed':
-        return const Color(0xFF22C55E);
+        return AppColors.green;
       case 'cancelled':
-        return const Color(0xFFE53935);
+        return AppColors.red;
       default:
-        return const Color(0xFF888888);
+        return AppColors.textSecondary;
     }
   }
 
@@ -53,25 +48,25 @@ class ProfileScreen extends StatelessWidget {
     final OrderController orderController = Get.find();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Perfil', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: AppColors.white,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
         centerTitle: true,
       ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => orderController.fetchOrders(),
-          color: const Color(0xFF1A1A1A),
+          color: AppColors.dark,
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
             SliverToBoxAdapter(
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 24),
-                color: Colors.white,
+                color: AppColors.white,
                 child: Obx(() {
                   final user = authController.currentUser.value;
                   return Column(
@@ -80,7 +75,7 @@ class ProfileScreen extends StatelessWidget {
                         width: 90,
                         height: 90,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1A1A1A),
+                          color: AppColors.dark,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
@@ -108,11 +103,11 @@ class ProfileScreen extends StatelessWidget {
                         style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1A1A1A)),
+                            color: AppColors.textPrimary),
                       ),
                       const Text(
                         'Kliente Inope Store',
-                        style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
+                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                       ),
                     ],
                   );
@@ -128,7 +123,7 @@ class ProfileScreen extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A)),
+                      color: AppColors.textPrimary),
                 ),
               ),
             ),
@@ -138,7 +133,7 @@ class ProfileScreen extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.white,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Obx(() {
@@ -162,6 +157,46 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
 
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: GestureDetector(
+                  onTap: () => Get.toNamed('/wishlist'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.red.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.favorite, color: AppColors.red, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text('Favoritu', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                        ),
+                        const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
@@ -170,7 +205,7 @@ class ProfileScreen extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A)),
+                      color: AppColors.textPrimary),
                 ),
               ),
             ),
@@ -204,7 +239,7 @@ class ProfileScreen extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A)),
+                      color: AppColors.textPrimary),
                 ),
               ),
             ),
@@ -216,7 +251,7 @@ class ProfileScreen extends StatelessWidget {
                     child: Padding(
                       padding: EdgeInsets.all(32),
                       child: CircularProgressIndicator(
-                          color: Color(0xFF1A1A1A)),
+                          color: AppColors.dark),
                     ),
                   ),
                 );
@@ -230,7 +265,7 @@ class ProfileScreen extends StatelessWidget {
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.white,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -241,7 +276,7 @@ class ProfileScreen extends StatelessWidget {
                         const Text('Seidauk iha pedidu',
                             style: TextStyle(
                                 fontSize: 15,
-                                color: Color(0xFF888888))),
+                                color: AppColors.textSecondary)),
                       ],
                     ),
                   ),
@@ -254,15 +289,13 @@ class ProfileScreen extends StatelessWidget {
                     final order = orders[i];
                     final status = order.status;
                     final total = order.total;
-                    final createdAt = order.createdAt;
-                    String dateStr = '${createdAt.day}/${createdAt.month}/${createdAt.year}';
                     final items = order.items;
 
                     return Container(
                       margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.white,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
@@ -283,7 +316,7 @@ class ProfileScreen extends StatelessWidget {
                                 style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
-                                    color: Color(0xFF1A1A1A)),
+                                    color: AppColors.textPrimary),
                               ),
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -321,17 +354,17 @@ class ProfileScreen extends StatelessWidget {
                                     child: Container(
                                       width: 40,
                                       height: 40,
-                                      color: const Color(0xFFF0F0F0),
+                                      color: AppColors.imageBg,
                                       child: image.isNotEmpty
                                           ? Image.network(image,
                                               fit: BoxFit.cover,
                                               errorBuilder: (_, __, ___) =>
                                                   const Icon(Icons.shopping_bag,
                                                       size: 18,
-                                                      color: Color(0xFFCCCCCC)))
+                                                      color: AppColors.placeholder))
                                           : const Icon(Icons.shopping_bag,
                                               size: 18,
-                                              color: Color(0xFFCCCCCC)),
+                                              color: AppColors.placeholder),
                                     ),
                                   ),
                                   const SizedBox(width: 10),
@@ -340,7 +373,7 @@ class ProfileScreen extends StatelessWidget {
                                       name,
                                       style: const TextStyle(
                                           fontSize: 13,
-                                          color: Color(0xFF444444)),
+                                          color: AppColors.textDark),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -363,13 +396,13 @@ class ProfileScreen extends StatelessWidget {
                               const Text('Total',
                                   style: TextStyle(
                                       fontSize: 13,
-                                      color: Color(0xFF888888))),
+                                      color: AppColors.textSecondary)),
                               Text(
                                 _fmt(total),
                                 style: const TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1A1A1A)),
+                                    color: AppColors.textPrimary),
                               ),
                             ],
                           ),
@@ -392,7 +425,7 @@ class ProfileScreen extends StatelessWidget {
                       child: Container(
                         height: 52,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1A1A1A),
+                          color: AppColors.dark,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
@@ -405,11 +438,11 @@ class ProfileScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.admin_panel_settings,
-                                color: Colors.white, size: 20),
+                                color: AppColors.white, size: 20),
                             SizedBox(width: 8),
                             Text('Admin Panel',
                                 style: TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.white,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 15)),
                           ],
@@ -432,8 +465,8 @@ class ProfileScreen extends StatelessWidget {
                       middleText: 'Ita boot hakarak sai husi konta?',
                       textConfirm: 'Sai',
                       textCancel: 'Lae',
-                      confirmTextColor: Colors.white,
-                      buttonColor: const Color(0xFFE53935),
+                      confirmTextColor: AppColors.white,
+                      buttonColor: AppColors.red,
                       onConfirm: () {
                         Get.back();
                         authController.signOut();
@@ -444,20 +477,20 @@ class ProfileScreen extends StatelessWidget {
                   child: Container(
                     height: 52,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                          color: const Color(0xFFE53935), width: 1.5),
+                          color: AppColors.red, width: 1.5),
                     ),
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.logout,
-                            color: Color(0xFFE53935), size: 18),
+                            color: AppColors.red, size: 18),
                         SizedBox(width: 8),
                         Text('Logout',
                             style: TextStyle(
-                                color: Color(0xFFE53935),
+                                color: AppColors.red,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15)),
                       ],
@@ -482,21 +515,21 @@ class ProfileScreen extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
+          color: AppColors.background,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: const Color(0xFF1A1A1A), size: 20),
+        child: Icon(icon, color: AppColors.textPrimary, size: 20),
       ),
       title: Text(
         label,
-        style: const TextStyle(fontSize: 12, color: Color(0xFF888888)),
+        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
       ),
       subtitle: Text(
         value,
         style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A1A)),
+            color: AppColors.textPrimary),
       ),
     );
   }
@@ -506,7 +539,7 @@ class ProfileScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -526,7 +559,7 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               label,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF888888)),
+              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
             ),
           ],
         ),

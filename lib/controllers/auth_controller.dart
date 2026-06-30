@@ -18,6 +18,7 @@ class AuthController extends GetxController {
   }
 
   Future<void> _loadProfile() async {
+    errorMessage.value = '';
     try {
       final res = await _api.get('/auth/profile/');
       if (res.statusCode == 200) {
@@ -25,8 +26,12 @@ class AuthController extends GetxController {
         if (data is Map<String, dynamic>) {
           currentUser.value = UserModel.fromJson(data);
         }
+      } else {
+        errorMessage.value = 'Failed to load profile: ${res.statusCode}';
       }
-    } catch (_) {}
+    } catch (e) {
+      errorMessage.value = 'Failed to load profile: $e';
+    }
   }
 
   Future<bool> signUp({

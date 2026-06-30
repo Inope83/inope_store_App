@@ -20,7 +20,7 @@ SECRET_KEY = os.environ.get(
 DEBUG = env_bool('DJANGO_DEBUG', True)
 ALLOWED_HOSTS = env_list(
     'DJANGO_ALLOWED_HOSTS',
-    'localhost,127.0.0.1,10.0.2.2,0.0.0.0,testserver,172.19.190.209,172.19.190.209:8000,192.168.68.118,192.168.1.2,192.168.1.189',
+    'localhost,127.0.0.1,10.0.2.2,0.0.0.0,testserver,10.29.184.120,172.19.190.209,172.19.190.209:8000,192.168.68.118,192.168.1.2,192.168.1.189,10.45.9.209',
 )
 
 INSTALLED_APPS = [
@@ -117,7 +117,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20,
+    'PAGE_SIZE': 100,
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',

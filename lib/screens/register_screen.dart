@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/custom_button.dart';
+import '../utils/app_colors.dart';
 
-class RegisterScreen extends StatelessWidget {
-  RegisterScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
   final AuthController _authController = Get.find();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
@@ -17,9 +23,19 @@ class RegisterScreen extends StatelessWidget {
   final RxBool isConfirmPasswordVisible = false.obs;
 
   @override
+  void dispose() {
+    nameController.dispose();
+    phoneController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -40,13 +56,13 @@ class RegisterScreen extends StatelessWidget {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2D2D2D),
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Icon(
                     Icons.shopping_bag,
                     size: 40,
-                    color: Colors.white,
+                    color: AppColors.white,
                   ),
                 ),
               ),
@@ -56,13 +72,13 @@ class RegisterScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2D2D2D),
+                  color: AppColors.primary,
                 ),
               ),
               const SizedBox(height: 8),
               const Text(
                 'Rejista atu hahú kompra',
-                style: TextStyle(fontSize: 14, color: Color(0xFF888888)),
+                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 32),
 
@@ -137,7 +153,7 @@ class RegisterScreen extends StatelessWidget {
                     child: const Text(
                       'Log In',
                       style: TextStyle(
-                        color: Color(0xFF2D2D2D),
+                        color: AppColors.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -166,7 +182,7 @@ class RegisterScreen extends StatelessWidget {
         'Por favor prenxe kampu hotu',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.orange,
-        colorText: Colors.white,
+        colorText: AppColors.white,
       );
       return;
     }
@@ -177,7 +193,7 @@ class RegisterScreen extends StatelessWidget {
         'Password no konfirmasaun la koresponde',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.orange,
-        colorText: Colors.white,
+        colorText: AppColors.white,
       );
       return;
     }
@@ -188,7 +204,7 @@ class RegisterScreen extends StatelessWidget {
         'Password mínimo 6 karakter',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.orange,
-        colorText: Colors.white,
+        colorText: AppColors.white,
       );
       return;
     }
@@ -212,7 +228,7 @@ class RegisterScreen extends StatelessWidget {
         _authController.errorMessage.value,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
-        colorText: Colors.white,
+        colorText: AppColors.white,
       );
     }
   }
@@ -235,11 +251,11 @@ class RegisterScreen extends StatelessWidget {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF2D2D2D), width: 2),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
       ),
     );
@@ -265,11 +281,11 @@ class RegisterScreen extends StatelessWidget {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF2D2D2D), width: 2),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
       ),
     );

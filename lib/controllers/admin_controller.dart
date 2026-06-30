@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../services/api_service.dart';
@@ -20,6 +19,28 @@ class AdminController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString orderFilter = 'all'.obs;
 
+  Future<List<dynamic>> _fetchAllPages(String path) async {
+    final List<dynamic> allResults = [];
+    String? nextUrl;
+    final res = await _api.get(path);
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+      final List<dynamic> results = data is Map ? (data['results'] ?? []) : data;
+      allResults.addAll(results);
+      nextUrl = data is Map ? data['next'] as String? : null;
+    }
+    while (nextUrl != null) {
+      final nextRes = await _api.get(nextUrl.replaceFirst(ApiService.baseUrl, ''));
+      if (nextRes.statusCode == 200) {
+        final data = jsonDecode(nextRes.body);
+        allResults.addAll(data['results'] ?? []);
+        nextUrl = data['next'] as String?;
+      } else {
+        break;
+      }
+    }
+    return allResults;
+  }
 
   Future<void> refreshAll() async {
     isLoading.value = true;
@@ -37,16 +58,8 @@ class AdminController extends GetxController {
 
   Future<void> fetchCategories() async {
     try {
-      final res = await _api.get('/categories/');
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        final List<dynamic> results = data is Map ? (data['results'] ?? []) : data;
-        categories.value =
-            results.map((c) => c as Map<String, dynamic>).toList();
-      } else {
-        Get.snackbar('Error', 'La konsege load kategoria: Status ${res.statusCode}',
-            snackPosition: SnackPosition.BOTTOM);
-      }
+      final results = await _fetchAllPages('/categories/');
+      categories.value = results.map((c) => c as Map<String, dynamic>).toList();
     } catch (e) {
       Get.snackbar('Error', 'La konsege load kategoria: $e',
           snackPosition: SnackPosition.BOTTOM);
@@ -121,15 +134,8 @@ class AdminController extends GetxController {
 
   Future<void> fetchAllOrders() async {
     try {
-      final res = await _api.get('/admin/orders/');
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        final List<dynamic> results = data is Map ? (data['results'] ?? []) : data;
-        allOrders.value = results.map((o) => o as Map<String, dynamic>).toList();
-      } else {
-        Get.snackbar('Error', 'La konsege load orden: Status ${res.statusCode}',
-            snackPosition: SnackPosition.BOTTOM);
-      }
+      final results = await _fetchAllPages('/admin/orders/');
+      allOrders.value = results.map((o) => o as Map<String, dynamic>).toList();
     } catch (e) {
       Get.snackbar('Error', 'La konsege load orden: $e',
           snackPosition: SnackPosition.BOTTOM);
@@ -138,15 +144,8 @@ class AdminController extends GetxController {
 
   Future<void> fetchAllUsers() async {
     try {
-      final res = await _api.get('/admin/users/');
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        final List<dynamic> results = data is Map ? (data['results'] ?? []) : data;
-        allUsers.value = results.map((u) => u as Map<String, dynamic>).toList();
-      } else {
-        Get.snackbar('Error', 'La konsege load uzuáriu: Status ${res.statusCode}',
-            snackPosition: SnackPosition.BOTTOM);
-      }
+      final results = await _fetchAllPages('/admin/users/');
+      allUsers.value = results.map((u) => u as Map<String, dynamic>).toList();
     } catch (e) {
       Get.snackbar('Error', 'La konsege load uzuáriu: $e',
           snackPosition: SnackPosition.BOTTOM);
@@ -164,8 +163,10 @@ class AdminController extends GetxController {
   String? userNameFor(dynamic userId) {
     if (userId == null) return null;
     final id = userId.toString();
-    final user = allUsers.firstWhereOrNull((u) => u['id'].toString() == id);
-    return user?['name'] as String? ?? user?['email'] as String?;
+    final idx = allUsers.indexWhere((u) => u['id'].toString() == id);
+    if (idx == -1) return null;
+    final user = allUsers[idx];
+    return user['name'] as String? ?? user['email'] as String?;
   }
 
   Future<void> updateOrderStatus(String orderId, String status) async {

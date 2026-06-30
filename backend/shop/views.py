@@ -74,9 +74,19 @@ class ProductViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         product = serializer.save()
         images = self.request.FILES.getlist('images')
-        if images:
-            # Optionally clear existing images if new ones are uploaded
-            # product.images.all().delete() 
+        existing_urls = self.request.data.get('existing_images', '')
+        keep_urls = {
+            u.strip()
+            for u in existing_urls.split(',')
+            if u.strip()
+        } if existing_urls else set()
+
+        if images or keep_urls:
+            request = self.request
+            for img in product.images.all():
+                url = request.build_absolute_uri(img.image.url) if request else img.image.url
+                if url not in keep_urls:
+                    img.delete()
             for idx, img in enumerate(images):
                 ProductImage.objects.create(product=product, image=img, sort_order=idx)
 
@@ -115,9 +125,27 @@ def cart_add(request):
 
     data = serializer.validated_data
     qty = data.get('quantity', 1)
+
     existing = CartItem.objects.filter(
         user=request.user, product_id=data['product_id']
     ).first()
+
+    try:
+        product_id = int(data['product_id'])
+    except (ValueError, TypeError):
+        return Response({'error': 'ID produtu inválidu'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        product = Product.objects.get(id=product_id)
+    except Product.DoesNotExist:
+        return Response({'error': 'Produtu la iha'}, status=status.HTTP_404_NOT_FOUND)
+
+    new_qty = (existing.quantity if existing else 0) + qty
+    if product.stock < new_qty:
+        return Response(
+            {'error': f'Stock la to\'o. Stock disponivel: {product.stock}'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     if existing:
         existing.quantity += qty
@@ -232,10 +260,7 @@ def order_create(request):
             payment_proof=request.FILES.get('payment_proof'),
         )
         for item in cart_items:
-            try:
-                product_id = int(item.product_id)
-            except (ValueError, TypeError):
-                continue
+            product_id = int(item.product_id)
             product = Product.objects.get(id=product_id)
             product.stock -= item.quantity
             product.save()

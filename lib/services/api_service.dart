@@ -1,8 +1,7 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../services/storage_service.dart';
 
 class ApiService {
   static String get baseUrl {
@@ -14,11 +13,9 @@ class ApiService {
     }
 
     if (defaultTargetPlatform == TargetPlatform.android) {
-      // 10.0.2.2 is for emulator; use your computer's LAN IP for physical phone.
-      return 'http://192.168.1.189:8000/api';
+      return 'http://10.29.184.120:8000/api';
     }
 
-    // For iOS simulator, macOS, Linux, Windows
     return 'http://127.0.0.1:8000/api';
   }
 
@@ -26,21 +23,20 @@ class ApiService {
   factory ApiService() => _instance;
   ApiService._();
 
-  final _storage = const FlutterSecureStorage();
+  final _storage = StorageService();
   String? _accessToken;
   String? _refreshToken;
+  bool _isRefreshing = false;
 
   String? get accessToken => _accessToken;
   String? get refreshToken => _refreshToken;
 
   Future<void> init() async {
     try {
-      _accessToken = await _storage.read(key: 'access_token');
-      _refreshToken = await _storage.read(key: 'refresh_token');
+      _accessToken = await _storage.read('access_token');
+      _refreshToken = await _storage.read('refresh_token');
     } catch (e) {
-      // Stale/corrupted encrypted storage (e.g. after reinstall with a
-      // different keystore key) causes decryption to fail. Wipe and continue.
-      debugPrint('Secure storage read failed, clearing: $e');
+      debugPrint('Storage read failed, clearing: $e');
       try {
         await _storage.deleteAll();
       } catch (_) {}
@@ -60,19 +56,26 @@ class ApiService {
   Future<void> _saveTokens(String access, String refresh) async {
     _accessToken = access;
     _refreshToken = refresh;
-    await _storage.write(key: 'access_token', value: access);
-    await _storage.write(key: 'refresh_token', value: refresh);
+    await _storage.write('access_token', access);
+    await _storage.write('refresh_token', refresh);
   }
 
   Future<void> clearTokens() async {
     _accessToken = null;
     _refreshToken = null;
-    await _storage.delete(key: 'access_token');
-    await _storage.delete(key: 'refresh_token');
+    await _storage.delete('access_token');
+    await _storage.delete('refresh_token');
   }
 
   Future<bool> _tryRefresh() async {
     if (_refreshToken == null) return false;
+
+    if (_isRefreshing) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      return _accessToken != null;
+    }
+
+    _isRefreshing = true;
     try {
       final res = await http.post(
         Uri.parse('$baseUrl/auth/token/refresh/'),
@@ -84,9 +87,13 @@ class ApiService {
         await _saveTokens(data['access'], data['refresh'] ?? _refreshToken!);
         return true;
       }
+      await clearTokens();
       return false;
     } catch (_) {
+      await clearTokens();
       return false;
+    } finally {
+      _isRefreshing = false;
     }
   }
 

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/cart_controller.dart';
 import '../controllers/product_controller.dart';
+import '../controllers/wishlist_controller.dart';
 import '../models/product_model.dart';
+import '../utils/format_utils.dart';
+import '../utils/app_colors.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({super.key});
@@ -12,33 +15,39 @@ class ProductDetailScreen extends StatefulWidget {
 }
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
-  late ProductModel product;
+  final WishlistController _wishlistCtrl = Get.find();
+  ProductModel? product;
   int _currentImage = 0;
   String? _selectedSize;
   String? _selectedColor;
   int _quantity = 1;
   bool _isAdding = false;
+  bool _showFullDescription = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final productId = Get.parameters['id'];
-    if (productId != null) {
-      final found = Get.find<ProductController>().getProductById(productId);
-      if (found != null) {
-        product = found;
+    if (productId != null && product == null) {
+      product = Get.find<ProductController>().getProductById(productId);
+      if (product == null) {
+        Get.snackbar('Sala', 'Produtu la hetan',
+            snackPosition: SnackPosition.BOTTOM);
+        Get.back();
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (product == null) return const SizedBox.shrink();
+    final p = product!;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
-            // ── App Bar ─────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
@@ -48,10 +57,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     icon: const Icon(Icons.arrow_back_ios, size: 20),
                   ),
                   const Spacer(),
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.favorite_outline, size: 20),
-                  ),
+                  Obx(() {
+                    final isFav = _wishlistCtrl.isInWishlist('${product!.id}');
+                    return IconButton(
+                      onPressed: () async {
+                        if (isFav) {
+                          final item = _wishlistCtrl.wishlist.firstWhereOrNull(
+                              (i) => i.productId == '${product!.id}');
+                          if (item != null) {
+                            await _wishlistCtrl.removeFromWishlist(item.id);
+                          }
+                        } else {
+                          await _wishlistCtrl.addToWishlist(
+                            productId: '${product!.id}',
+                            name: product!.name,
+                            price: product!.price,
+                            imageUrl: product!.firstImage,
+                          );
+                        }
+                      },
+                      icon: Icon(
+                        isFav ? Icons.favorite : Icons.favorite_outline,
+                        size: 20,
+                        color: isFav ? AppColors.red : null,
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
@@ -60,27 +91,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Images ────────────────────────
-                    _buildImageGallery(),
-                    // ── Info ──────────────────────────
+                    _buildImageGallery(p),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildHeader(),
+                          _buildHeader(p),
                           const SizedBox(height: 16),
-                          // ── Size ───────────────────────
-                          _buildSizeSelector(),
+                          _buildSizeSelector(p),
                           const SizedBox(height: 16),
-                          // ── Color ──────────────────────
-                          _buildColorSelector(),
+                          _buildColorSelector(p),
                           const SizedBox(height: 16),
-                          // ── Quantity ───────────────────
-                          _buildQuantitySelector(),
+                          _buildQuantitySelector(p),
                           const SizedBox(height: 16),
-                          // ── Description ────────────────
-                          _buildDescription(),
+                          _buildDescription(p),
                           const SizedBox(height: 24),
                         ],
                       ),
@@ -89,15 +114,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
               ),
             ),
-            // ── Bottom Bar ───────────────────────────
-            _buildBottomBar(),
+            _buildBottomBar(p),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildImageGallery() {
+  Widget _buildImageGallery(ProductModel p) {
     return Column(
       children: [
         SizedBox(
@@ -105,34 +129,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           width: double.infinity,
           child: PageView.builder(
             onPageChanged: (i) => setState(() => _currentImage = i),
-            itemCount: product.imageUrls.isNotEmpty ? product.imageUrls.length : 1,
+            itemCount: p.imageUrls.isNotEmpty ? p.imageUrls.length : 1,
             itemBuilder: (_, i) {
-              final imgUrl = product.imageUrls.isNotEmpty
-                  ? product.imageUrls[i]
+              final imgUrl = p.imageUrls.isNotEmpty
+                  ? p.imageUrls[i]
                   : '';
               return Container(
-                color: const Color(0xFFF0F0F0),
+                color: AppColors.imageBg,
                 child: imgUrl.isNotEmpty
                     ? Image.network(imgUrl, fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported, size: 60))
-                    : const Icon(Icons.shopping_bag, size: 60, color: Color(0xFFCCCCCC)),
+                    : const Icon(Icons.shopping_bag, size: 60, color: AppColors.placeholder),
               );
             },
           ),
         ),
-        if (product.imageUrls.length > 1)
+        if (p.imageUrls.length > 1)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(product.imageUrls.length, (i) {
+              children: List.generate(p.imageUrls.length, (i) {
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   width: _currentImage == i ? 20 : 6,
                   height: 6,
                   decoration: BoxDecoration(
-                    color: _currentImage == i ? const Color(0xFF1A1A1A) : const Color(0xFFCCCCCC),
+                    color: _currentImage == i ? AppColors.dark : AppColors.placeholder,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 );
@@ -143,28 +167,28 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ProductModel p) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(product.category, style: const TextStyle(fontSize: 12, color: Color(0xFF888888))),
+        Text(p.category, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
         const SizedBox(height: 4),
-        Text(product.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
+        Text(p.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
         const SizedBox(height: 8),
         Row(
           children: [
-            Text('\$${_fmt(product.price)}',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
-            if (product.hasDiscount) ...[
+            Text(FormatUtils.formatPrice(p.price),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+            if (p.hasDiscount) ...[
               const SizedBox(width: 8),
-              Text('\$${_fmt(product.originalPrice!)}',
-                  style: const TextStyle(fontSize: 14, color: Color(0xFFAAAAAA), decoration: TextDecoration.lineThrough)),
+              Text(FormatUtils.formatPrice(p.originalPrice!),
+                  style: const TextStyle(fontSize: 14, color: AppColors.textMuted, decoration: TextDecoration.lineThrough)),
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(color: const Color(0xFFE53935), borderRadius: BorderRadius.circular(4)),
-                child: Text('-${product.discountPercent}%',
-                    style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+                decoration: BoxDecoration(color: AppColors.red, borderRadius: BorderRadius.circular(4)),
+                child: Text('-${p.discountPercent}%',
+                    style: const TextStyle(fontSize: 10, color: AppColors.white, fontWeight: FontWeight.bold)),
               ),
             ],
           ],
@@ -173,41 +197,41 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         Row(
           children: [
             ...List.generate(5, (i) => Icon(
-              i < product.rating.round() ? Icons.star : Icons.star_border,
-              size: 16, color: const Color(0xFFF59E0B),
+              i < p.rating.round() ? Icons.star : Icons.star_border,
+              size: 16, color: AppColors.star,
             )),
             const SizedBox(width: 6),
-            Text('(${product.rating.toStringAsFixed(1)})', style: const TextStyle(fontSize: 12, color: Color(0xFF888888))),
+            Text('(${p.rating.toStringAsFixed(1)})', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
             const Spacer(),
-            Text('Stok: ${product.stock}', style: TextStyle(fontSize: 12, color: product.stock <= 5 ? const Color(0xFFE53935) : const Color(0xFF888888))),
+            Text('Stok: ${p.stock}', style: TextStyle(fontSize: 12, color: p.stock <= 5 ? AppColors.red : AppColors.textSecondary)),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildSizeSelector() {
+  Widget _buildSizeSelector(ProductModel p) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Tamanhu', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
+        const Text('Tamanhu', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
-          children: product.sizes.map((size) {
+          children: p.sizes.map((size) {
             final selected = _selectedSize == size;
             return GestureDetector(
               onTap: () => setState(() => _selectedSize = size),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 decoration: BoxDecoration(
-                  color: selected ? const Color(0xFF1A1A1A) : Colors.white,
+                  color: selected ? AppColors.dark : AppColors.white,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: selected ? const Color(0xFF1A1A1A) : const Color(0xFFE0E0E0)),
+                  border: Border.all(color: selected ? AppColors.dark : AppColors.border),
                 ),
                 child: Text(size,
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500,
-                        color: selected ? Colors.white : const Color(0xFF555555))),
+                        color: selected ? AppColors.white : AppColors.textLight)),
               ),
             );
           }).toList(),
@@ -216,24 +240,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildColorSelector() {
+  Widget _buildColorSelector(ProductModel p) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Kór', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
+        const Text('Kór', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
-          children: product.colors.map((color) {
+          children: p.colors.map((color) {
             final selected = _selectedColor == color;
             return GestureDetector(
               onTap: () => setState(() => _selectedColor = color),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 decoration: BoxDecoration(
-                  color: selected ? const Color(0xFF1A1A1A) : Colors.white,
+                  color: selected ? AppColors.dark : AppColors.white,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: selected ? const Color(0xFF1A1A1A) : const Color(0xFFE0E0E0)),
+                  border: Border.all(color: selected ? AppColors.dark : AppColors.border),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -243,13 +267,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       decoration: BoxDecoration(
                         color: _parseColor(color),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: color == 'White' ? const Color(0xFFCCCCCC) : Colors.transparent),
+                        border: Border.all(color: color == 'White' ? AppColors.placeholder : Colors.transparent),
                       ),
                     ),
                     const SizedBox(width: 6),
                     Text(color,
                         style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500,
-                            color: selected ? Colors.white : const Color(0xFF555555))),
+                            color: selected ? AppColors.white : AppColors.textLight)),
                   ],
                 ),
               ),
@@ -260,21 +284,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildQuantitySelector() {
+  Widget _buildQuantitySelector(ProductModel p) {
     return Row(
       children: [
-        const Text('Kuantidade', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
+        const Text('Kuantidade', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
         const Spacer(),
         GestureDetector(
           onTap: _quantity > 1 ? () => setState(() => _quantity--) : null,
           child: Container(
             width: 32, height: 32,
             decoration: BoxDecoration(
-              color: _quantity > 1 ? const Color(0xFF1A1A1A) : Colors.grey.shade200,
+              color: _quantity > 1 ? AppColors.dark : Colors.grey.shade200,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(Icons.remove, size: 16,
-                color: _quantity > 1 ? Colors.white : Colors.grey.shade400),
+                color: _quantity > 1 ? AppColors.white : Colors.grey.shade400),
           ),
         ),
         Padding(
@@ -283,39 +307,66 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
         GestureDetector(
-          onTap: _quantity < product.stock ? () => setState(() => _quantity++) : null,
+          onTap: _quantity < p.stock ? () => setState(() => _quantity++) : null,
           child: Container(
             width: 32, height: 32,
             decoration: BoxDecoration(
-              color: _quantity < product.stock ? const Color(0xFF1A1A1A) : Colors.grey.shade200,
+              color: _quantity < p.stock ? AppColors.dark : Colors.grey.shade200,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(Icons.add, size: 16,
-                color: _quantity < product.stock ? Colors.white : Colors.grey.shade400),
+                color: _quantity < p.stock ? AppColors.white : Colors.grey.shade400),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDescription() {
+  Widget _buildDescription(ProductModel p) {
+    final desc = p.description;
+    final isLong = desc.length > 150;
+    final displayText = isLong && !_showFullDescription
+        ? '${desc.substring(0, 150)}... '
+        : '$desc ';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Deskrisaun', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
+        const Text('Deskrisaun', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
         const SizedBox(height: 8),
-        Text(product.description.isNotEmpty ? product.description : 'Seidauk iha deskrisaun.',
-            style: const TextStyle(fontSize: 13, color: Color(0xFF666666), height: 1.5)),
+        Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: displayText,
+                style: const TextStyle(fontSize: 13, color: AppColors.textMedium, height: 1.5),
+              ),
+              if (isLong)
+                WidgetSpan(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _showFullDescription = !_showFullDescription),
+                    child: Text(
+                      _showFullDescription ? 'Show Less' : 'Show More',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildBottomBar() {
-    final total = product.price * _quantity;
+  Widget _buildBottomBar(ProductModel p) {
+    final total = p.price * _quantity;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, -2))],
       ),
       child: SafeArea(
@@ -327,26 +378,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Total', style: TextStyle(fontSize: 11, color: Color(0xFF888888))),
-                  Text('\$${_fmt(total)}',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
+                  const Text('Total', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                  Text(FormatUtils.formatPrice(total),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
                 ],
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: GestureDetector(
-                onTap: product.stock > 0 ? _addToCart : null,
+                onTap: p.stock > 0 ? _addToCart : null,
                 child: Container(
                   height: 48,
                   decoration: BoxDecoration(
-                    color: product.stock > 0 ? const Color(0xFF1A1A1A) : Colors.grey.shade300,
+                    color: p.stock > 0 ? AppColors.dark : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Center(
                     child: _isAdding
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('+ Karréta', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white))
+                        : const Text('+ Karréta', style: TextStyle(color: AppColors.white, fontSize: 14, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),
@@ -358,12 +409,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Future<void> _addToCart() async {
+    if (product == null) return;
+    final p = product!;
     setState(() => _isAdding = true);
     await Get.find<CartController>().addToCart(
-      productId: product.id.toString(),
-      name: product.name,
-      price: product.price,
-      imageUrl: product.firstImage,
+      productId: p.id.toString(),
+      name: p.name,
+      price: p.price,
+      imageUrl: p.firstImage,
       quantity: _quantity,
     );
     setState(() => _isAdding = false);
@@ -382,16 +435,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       case 'pink': return Colors.pink;
       case 'grey': case 'gray': return Colors.grey;
       case 'brown': return Colors.brown;
-      default: return const Color(0xFF888888);
+      default: return AppColors.textSecondary;
     }
   }
 
-  String _fmt(double price) {
-    final intPart = price.toInt();
-    final formatted = intPart.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]}.',
-    );
-    return formatted;
-  }
 }

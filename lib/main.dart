@@ -5,7 +5,10 @@ import 'controllers/cart_controller.dart';
 import 'controllers/product_controller.dart';
 import 'controllers/order_controller.dart';
 import 'controllers/admin_controller.dart';
+import 'controllers/notification_controller.dart';
+import 'controllers/wishlist_controller.dart';
 import 'screens/splash_screen.dart';
+import 'screens/wishlist_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
@@ -24,6 +27,8 @@ void main() async {
   Get.put(ProductController());
   Get.put(OrderController());
   Get.put(AdminController());
+  Get.put(NotificationController());
+  Get.put(WishlistController());
 
   runApp(const InopeStore());
 }
@@ -50,6 +55,7 @@ class InopeStore extends StatelessWidget {
         GetPage(name: '/cart', page: () => const CartScreen()),
         GetPage(name: '/checkout', page: () => const CheckoutScreen()),
         GetPage(name: '/product-detail', page: () => const ProductDetailScreen()),
+        GetPage(name: '/wishlist', page: () => const WishlistScreen()),
         GetPage(name: '/admin', page: () {
           final auth = Get.find<AuthController>();
           if (!auth.isAdmin) return const _NotAdminScreen();
